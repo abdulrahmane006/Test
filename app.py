@@ -2,38 +2,102 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# إعدادات الصفحة
-st.set_page_config(page_title="المخازن", page_icon="📦", layout="centered")
+st.set_page_config(page_title="المخازن", layout="centered")
 
-# تطبيق التصميم واللغة العربية
-st.markdown("""
-    <style>
-    .stApp { direction: RTL; text-align: right; background-color: #ffffff; color: #000000; }
-    .main-title { text-align: center; color: #000000; font-size: 32px; font-weight: bold; margin-bottom: 20px; }
-    .stButton>button { color: #ffffff; background-color: #000000; border-radius: 4px; }
-    div[data-testid="stExpander"] { border: 1px solid #000000; border-radius: 4px; background-color: #fafafa; }
-    </style>
-""", unsafe_allow_html=True)
-
-# 1. قاعدة البيانات الافتراضية
+# قاعدة البيانات الافتراضية
 if 'products_db' not in st.session_state:
-    cur_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+    t = datetime.now().strftime("%Y-%m-%d %H:%M")
     st.session_state.products_db = pd.DataFrame([
-        {"الكود": "101", "اسم النوع": "توب قطن حريم", "اللون": "أسود", "المخزن": "مخزن أ", "العدد المتوفر": 25, "تاريخ آخر تعديل": cur_time},
-        {"الكود": "102", "اسم النوع": "توب صوف رجالي", "اللون": "أزرق", "المخزن": "مخزن ب", "العدد المتوفر": 14, "تاريخ آخر تعديل": cur_time},
-        {"الكود": "125", "اسم النوع": "دم غزال", "اللون": "أحمر", "المخزن": "المخزن الرئيسي", "العدد المتوفر": 80, "تاريخ آخر تعديل": cur_time}
+        {"الكود": "101", "اسم النوع": "توب قطن حريم", "اللون": "أسود", "المخزن": "مخزن أ", "العدد المتوفر": 25, "تاريخ آخر تعديل": t},
+        {"الكود": "102", "اسم النوع": "توب صوف رجالي", "اللون": "أزرق", "المخزن": "مخزن ب", "العدد المتوفر": 14, "تاريخ آخر تعديل": t},
+        {"الكود": "125", "اسم النوع": "دم غزال", "اللون": "أحمر", "المخزن": "الرئيسي", "العدد المتوفر": 80, "تاريخ آخر تعديل": t}
     ])
 
-# كود المسؤول
-ADMIN_PASSWORD = "404"
-
-# زر الترس العلوي للمسؤول
-top_c1, top_c2 = st.columns([9, 1])
-with top_c2:
-    if st.button("⚙️", help="بوابة المسؤول"):
+# زر الترس للمسؤول فوق على اليسار
+c1, c2 = st.columns([9, 1])
+with c2:
+    if st.button("⚙️"):
         st.session_state.show_admin = not st.session_state.get('show_admin', False)
 
-password_input = st.text_input("أدخل كود المسؤول السري:", type="password") if st.session_state.get('show_admin', False) else ""
+pass_in = st.text_input("كود المسؤول:", type="password") if st.session_state.get('show_admin', False) else ""
+
+# العنوان في المنتصف
+st.markdown("<h1 style='text-align: center; color: black;'>المخازن</h1>", unsafe_allow_html=True)
+
+# 📋 زر وقائمة آخر التعديلات
+with st.expander("📊 آخر التعديلات"):
+    if not st.session_state.products_db.empty:
+        df_c = st.session_state.products_db.copy()
+        df_c['txt'] = df_c.apply(lambda r: f"{r['اسم النوع']} ({r['الكود']}) ... آخر تعديل: {r['تاريخ آخر تعديل']}", axis=1)
+        st.selectbox("", options=df_c['txt'], label_visibility="collapsed")
+
+st.write("---")
+
+# 🔍 خانة البحث والنتائج التلقائية
+query = st.text_input("", placeholder="ابحث باسم النوع أو كود المنتج...", label_visibility="collapsed")
+
+if query:
+    df = st.session_state.products_db
+    res = df[df['اسم النوع'].str.contains(query, case=False, na=False) | df['الكود'].astype(str).str.contains(query, case=False, na=False)]
+    
+    if not res.empty:
+        for idx, row in res.iterrows():
+            with st.container(border=True):
+                st.markdown(f"### 📌 {row['اسم النوع']} ({row['الكود']})")
+                col1, col2, col3 = st.columns(3)
+                with col1: st.metric(label="العدد المتوفر", value=f"{row['العدد المتوفر']} قطعة")
+                with col2: st.text_input(label="اللون", value=row['اللون'], disabled=True, key=f"c_{idx}")
+                with col3: st.text_input(label="المخزن", value=row['المخزن'], disabled=True, key=f"l_{idx}")
+                st.caption(f"🕒 تاريخ التعديل: {row['تاريخ آخر تعديل']}")
+    else:
+        st.warning("⚠️ لا توجد نتائج.")
+
+st.write("---")
+
+# 🛠️ لوحة تحكم المسؤول بكود 404
+if pass_in == "404":
+    st.markdown("### 🛠️ لوحة المسؤول")
+    t1, t2, t3 = st.tabs(["✏️ تعديل سريع", "➕ إضافة منفرد", "📂 رفع Excel"])
+    
+    with t1:
+        ed_df = st.data_editor(st.session_state.products_db, use_container_width=True, num_rows="dynamic")
+        if st.button("💾 حفظ التعديلات"):
+            current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+            ed_df["تاريخ آخر تعديل"] = current_time
+            st.session_state.products_db = ed_df
+            st.success("✅ تم التحديث!")
+            st.rerun()
+
+    with t2:
+        with st.form("add_f", clear_on_submit=True):
+            nc = st.text_input("الكود:")
+            nn = st.text_input("الاسم:")
+            nco = st.text_input("اللون:")
+            nm = st.text_input("المخزن:")
+            nq = st.number_input("العدد:", min_value=0, step=1)
+            if st.form_submit_button("➕ حفظ"):
+                if nc and nn:
+                    new_r = {"الكود": str(nc), "اسم النوع": str(nn), "اللون": str(nco), "المخزن": str(nm), "العدد المتوفر": int(nq), "تاريخ آخر تعديل": datetime.now().strftime("%Y-%m-%d %H:%M")}
+                    st.session_state.products_db = pd.concat([st.session_state.products_db, pd.DataFrame([new_r])], ignore_index=True)
+                    st.success("✅ تم!")
+                    st.rerun()
+
+    with t3:
+        up_file = st.file_uploader("اختر ملف الإكسيل:", type=["xlsx", "xls"])
+        if up_file is not None:
+            try:
+                up_df = pd.read_excel(up_file)
+                req = ["الكود", "اسم النوع", "اللون", "المخزن", "العدد المتوفر"]
+                if not [c for c in req if c not in up_df.columns]:
+                    if st.button("🚀 اعتماد الإكسيل"):
+                        up_df["تاريخ آخر تعديل"] = datetime.now().strftime("%Y-%m-%d %H:%M")
+                        st.session_state.products_db = up_df[req + ["تاريخ آخر تعديل"]]
+                        st.success("🎉 تم الرفع بنجاح!")
+                        st.rerun()
+                else:
+                    st.error("تأكد من أسماء الأعمدة في ملف الإكسيل")
+            except Exception as e:
+                st.error(f"خطأ: {e}")
 
 # العنوان الرئيسي في المنتصف بدون صناديق
 st.markdown('<div class="main-title">المخازن</div>', unsafe_allow_html=True)
