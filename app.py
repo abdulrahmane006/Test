@@ -5,7 +5,7 @@ from datetime import datetime
 # 1. إعدادات الصفحة الأساسية
 st.set_page_config(page_title="المخازن - محلات زقزوق", layout="centered")
 
-# 2. تصميم الواجهة بالكامل (الحواف المنحنية، التوسيط الكامل، وتساوي المستطيلات)
+# 2. هندسة التصميم بالكامل وتوسيط المدخلات والأرقام
 st.markdown("""
     <style>
     .stApp { direction: RTL; text-align: right; background-color: #ffffff; color: #000000; }
@@ -15,17 +15,17 @@ st.markdown("""
     .main-title { font-size: 38px; font-weight: bold; color: #000000; line-height: 1.0; }
     .shop-title { font-size: 16px; color: #555555; margin-top: 5px; }
     
-    /* جعل كل الحواف في الأزرار والخانات والقوائم منحنية وتوسيط النصوص بداخلها */
+    /* حواف منحنية لكل شيء وتوسيط نصوص القوائم والخانات */
     input, .stButton>button, div[data-testid="stExpander"], .stSelectbox>div>div { 
         border-radius: 15px !important; 
         text-align: center !important;
     }
     
-    /* ضبط خانة البحث الرئيسية لتكون جهة اليسار كما طلبت سابقاً */
+    /* جلب نص التوجيه لخانة البحث الرئيسية لليسار وترجمتها */
     .main-search input { text-align: left !important; direction: ltr !important; }
     
-    /* توسيط نصوص المدخلات داخل صفحة المسؤول وتساويها */
-    .admin-inputs input { text-align: center !important; }
+    /* سحر توسيط الأرقام والنصوص داخل مربعات الإدخال بالكامل بما فيها أرقام الكميات */
+    input[type="number"], .stTextInput input { text-align: center !important; }
     
     /* بطاقة النتيجة المنحنية الموحدة الشاملة للمستخدم والمسؤول */
     .unified-card {
@@ -37,7 +37,7 @@ st.markdown("""
         text-align: center;
     }
     .center-datetime { font-size: 14px; color: #444444; text-align: center; margin-bottom: 12px; line-height: 1.3; }
-    .center-prod-title { font-size: 22px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 15px; }
+    .center-prod-title { font-size: 24px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 15px; }
     
     /* جدول الأعمدة الموسطة المتساوية */
     .card-columns { display: flex; justify-content: space-around; margin-top: 10px; text-align: center; }
@@ -45,7 +45,7 @@ st.markdown("""
     .col-label { font-size: 14px; color: #777777; margin-bottom: 4px; }
     .col-value { font-size: 18px; font-weight: bold; color: #000000; }
     
-    /* تخصيص قوائم الاختيار والتبويبات لتظهر في المنتصف تماماً */
+    /* تنسيق شريط قائمة المهام وآخر الإضافات في المنتصف */
     .stExpanderSummary p { font-size: 22px !important; font-weight: bold !important; text-align: center !important; width: 100%; }
     .added-box {
         border: 1px solid #999999;
@@ -56,27 +56,37 @@ st.markdown("""
         text-align: center;
     }
     
-    /* تخصيص صندوق الكود السري الموسط النظيف */
-    .login-container {
+    /* دمج خانة الدخول السري داخل المستطيل العلوي المنحني الفخم */
+    .top-login-wrapper {
         border: 2px solid #000000;
-        border-radius: 20px;
-        padding: 35px;
-        max-width: 350px;
-        margin: 100px auto;
+        border-radius: 15px;
+        padding: 2px;
+        max-width: 100%;
+        margin: 10px auto;
+    }
+    .top-login-wrapper input { border: none !important; box-shadow: none !important; background: transparent; }
+    
+    /* مستطيل موسط فخم لعرض اسم أو كود التوب بشكل مستقل */
+    .focus-card-title {
+        border: 2px solid #000000;
+        border-radius: 15px;
+        padding: 10px;
+        font-size: 24px;
+        font-weight: bold;
+        background-color: #ffffff;
         text-align: center;
+        margin: 15px auto;
+        max-width: 90%;
     }
     
-    /* تنسيقات عناوين صفحة المسؤول الموسطة */
-    .admin-page-title { font-size: 26px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 20px; }
+    .admin-page-title { font-size: 30px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 20px; }
     .admin-section-title { font-size: 22px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 15px; }
     
-    /* محاذاة أرقام مدخلات النماذج لتكون موسطة */
-    div[data-testid="stMarkdownContainer"] > p { text-align: center !important; }
     label { width: 100%; text-align: center !important; display: block !important; font-weight: bold !important; }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. قاعدة البيانات الافتراضية للبرنامج
+# 3. قاعدة البيانات الافتراضية
 if 'products_db' not in st.session_state:
     st.session_state.products_db = pd.DataFrame([
         {"الكود": "101", "اسم النوع": "دم غزال", "اللون": "احمر", "المخزن": "العشة", "العدد المتوفر": 3, "التاريخ": "13/6/2026", "الوقت": "3:39"}
@@ -87,7 +97,7 @@ if 'show_admin_flow' not in st.session_state:
 if 'is_admin_logged' not in st.session_state:
     st.session_state.is_admin_logged = False
 
-# 4. الترس أعلى اليمين للتحويل بين الصفحات وقفل الجلسة بأمان
+# 4. الترس أعلى اليمين للتحويل السلس وقفل الجلسة
 top_c1, top_c2 = st.columns([1, 9])
 with top_c1:
     if st.button("⚙️", key="panel_gear"):
@@ -100,10 +110,10 @@ with top_c1:
             st.rerun()
 
 # -------------------------------------------------------------
-# 🔒 بـوابـة المسؤول (المستطيل الموسط النظيف بكلمة ادخل الكود بالداخل)
+# 🔒 بـوابـة المسؤول (مدمجة بالكامل داخل المستطيل الفوقاني المنحني)
 # -------------------------------------------------------------
 if st.session_state.show_admin_flow and not st.session_state.is_admin_logged:
-    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+    st.markdown('<div class="top-login-wrapper">', unsafe_allow_html=True)
     pass_in = st.text_input("", type="password", placeholder="ادخل الكود", label_visibility="collapsed")
     if pass_in == "404":
         st.session_state.is_admin_logged = True
@@ -111,14 +121,14 @@ if st.session_state.show_admin_flow and not st.session_state.is_admin_logged:
     st.markdown('</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# 🛠️ صـفـحـة الـمـسـؤول الـمـطـورة (عند كـتـابـة 404 بنجاح)
+# 🛠️ صـفـحـة الـمـسـؤول الـمـطـورة (إدارة الـمـخـازن)
 # -------------------------------------------------------------
 elif st.session_state.is_admin_logged:
-    st.markdown('<div class="admin-page-title">لوحة تحكم محلات زقزوق</div>', unsafe_allow_html=True)
+    st.markdown('<div class="admin-page-title">إدارة المخازن</div>', unsafe_allow_html=True)
     st.write("---")
     
-    # قائمة المهام الموسطة المنحنية الشاملة لخياراتك الثلاثة
-    with st.expander("📋 قائمة المهام"):
+    # قائمة المهام المنسدلة التلقائية الموسطة
+    with st.expander("قائمة المهام", expanded=True):
         menu_choice = st.selectbox(
             "",
             ["تعديل البيانات الحالية", "إضافة منتج يدوياً", "خيار ملف Excel"],
@@ -127,81 +137,82 @@ elif st.session_state.is_admin_logged:
     
     st.write(" ")
 
-    # الخانة الأولى: تعديل البيانات الحالية (البحث بالكود لتعديل أو إزالة منتج مع التأكيد)
+    # الخانة الأولى: تعديل البيانات الحالية (منظومة البحث المتبادل الذكية والموسطة بالكامل)
     if menu_choice == "تعديل البيانات الحالية":
         st.markdown('<div class="admin-section-title">البحث عن توب وتعديله أو إزالته</div>', unsafe_allow_html=True)
         
-        # صندوق البحث الموسط المخصص للمسؤول
-        search_code = st.text_input("", placeholder="اكتب كود المنتج واضغط إدخال للبحث...", label_visibility="collapsed")
+        # خانات البحث المتبادل موسطة ومساوية
+        search_c = st.text_input("", placeholder="ابحث بكود المنتج...", key="adm_src_code", label_visibility="collapsed")
+        search_n = st.text_input("", placeholder="أو ابحث باسم النوع...", key="adm_src_name", label_visibility="collapsed")
         
-        if search_code:
-            df = st.session_state.products_db
-            # البحث المطابق تماماً للكود
-            product_idx = df[df['الكود'].astype(str) == str(search_code)].index
+        df = st.session_state.products_db
+        target_idx = None
+        
+        # التحقق من مدخلات البحث الذكي
+        if search_c:
+            found = df[df['الكود'].astype(str) == str(search_c)].index
+            if not found.empty: target_idx = found[0]
+        elif search_n:
+            found = df[df['اسم النوع'].str.contains(search_n, case=False, na=False)].index
+            if not found.empty: target_idx = found[0]
             
-            if not product_idx.empty:
-                idx = product_idx[0]
-                row = df.loc[idx]
+        if target_idx is not None:
+            idx = target_idx
+            row = df.loc[idx]
+            
+            # 1. إظهار اسم المنتج تلقائياً داخل المستطيل الموسط المنحني كما طلبت في الرسمة
+            st.markdown(f'<div class="focus-card-title">{row["اسم النوع"]} ({row["الكود"]})</div>', unsafe_allow_html=True)
+            
+            # 2. عرض تفاصيل التعديل والتحكم في بطاقة واحدة منحنية وموسطة الأرقام بالكامل
+            st.markdown('<div class="unified-card">', unsafe_allow_html=True)
+            
+            c1, c2, c3 = st.columns(3)
+            with c1: u_color = st.text_input("اللون", value=row["اللون"], key=f"ec_{idx}")
+            with c2: u_qty = st.number_input("العدد", value=int(row["العدد المتوفر"]), min_value=0, step=1, key=f"eq_{idx}")
+            with c3: u_store = st.text_input("المكان", value=row["المخزن"], key=f"el_{idx}")
+            
+            st.write(" ")
+            
+            b_col1, b_col2 = st.columns(2)
+            with b_col1:
+                save_btn = st.button("💾 حفظ التعديلات وتحديث الوقت", use_container_width=True)
+            with b_col2:
+                delete_btn = st.button("🗑️ إزالة هذا المنتج من المخزن", use_container_width=True)
+            
+            if save_btn:
+                now = datetime.now()
+                st.session_state.products_db.at[idx, "اللون"] = u_color
+                st.session_state.products_db.at[idx, "العدد المتوفر"] = u_qty
+                st.session_state.products_db.at[idx, "المخزن"] = u_store
+                st.session_state.products_db.at[idx, "التاريخ"] = now.strftime("%d/%m/%Y")
+                st.session_state.products_db.at[idx, "الوقت"] = now.strftime("%I:%M").lstrip("0")
+                st.success("🎉 تم الحفظ وتحديث التوقيت بنجاح!")
+                st.rerun()
+            
+            if delete_btn or st.session_state.get(f"confirm_del_{idx}", False):
+                st.session_state[f"confirm_del_{idx}"] = True
+                st.markdown("<p style='color:red; font-weight:bold; text-align:center;'>⚠️ هل أنت متأكد تماماً من إزالة هذا المنتج نهائياً؟</p>", unsafe_allow_html=True)
                 
-                # عرض بطاقة التعديل المنحنية الموسطة المتساوية بالكامل
-                st.markdown('<div class="unified-card admin-inputs">', unsafe_allow_html=True)
-                st.markdown(f"<div style='font-size:24px; font-weight:bold; margin-bottom:5px;'>{row['اسم النوع']}</div>", unsafe_allow_html=True)
-                st.markdown(f"<div style='font-size:16px; color:#666666; margin-bottom:15px;'>كود المنتج المختار: {row['الكود']}</div>", unsafe_allow_html=True)
-                
-                # الخانات المتساوية المتناسقة لتعديل كل جزئية يدوياً
-                c1, c2, c3 = st.columns(3)
-                with c1: u_color = st.text_input("اللون", value=row["اللون"], key=f"edit_c_{idx}")
-                with c2: u_qty = st.number_input("العدد المتوفر", value=int(row["العدد المتوفر"]), min_value=0, step=1, key=f"edit_q_{idx}")
-                with c3: u_store = st.text_input("المكان", value=row["المخزن"], key=f"edit_l_{idx}")
-                
-                st.write(" ")
-                
-                # الأزرار في المنتصف تماماً وبشكل متناسق ومساواة كاملة
-                b_col1, b_col2 = st.columns(2)
-                with b_col1:
-                    save_btn = st.button("💾 حفظ التعديلات وتحديث الوقت", use_container_width=True)
-                with b_col2:
-                    delete_btn = st.button("🗑️ إزالة هذا المنتج من المخزن", use_container_width=True, type="secondary")
-                
-                # تنفيذ الحفظ وتحديث الوقت تلقائياً عند تغيير البيانات فقط
-                if save_btn:
-                    now = datetime.now()
-                    if not (row["اللون"] == u_color and row["العدد المتوفر"] == u_qty and row["المخزن"] == u_store):
-                        st.session_state.products_db.at[idx, "اللون"] = u_color
-                        st.session_state.products_db.at[idx, "العدد المتوفر"] = u_qty
-                        st.session_state.products_db.at[idx, "المخزن"] = u_store
-                        st.session_state.products_db.at[idx, "التاريخ"] = now.strftime("%d/%m/%Y")
-                        st.session_state.products_db.at[idx, "الوقت"] = now.strftime("%I:%M").lstrip("0")
-                        st.success("🎉 تم حفظ التعديلات الجديدة وتحديث التوقيت بنجاح!")
-                    else:
-                        st.info("لم تقم بتغيير أي بيانات لحفظها.")
-                    st.rerun()
-                
-                # تفعيل آلية التأكيد قبل الإزالة لمنع الأخطاء العمالية
-                if delete_btn or st.session_state.get(f"confirm_del_{idx}", False):
-                    st.session_state[f"confirm_del_{idx}"] = True
-                    st.markdown("<p style='color:red; font-weight:bold; text-align:center;'>⚠️ هل أنت متأكد تماماً من إزالة هذا المنتج نهائياً؟</p>", unsafe_allow_html=True)
-                    
-                    del_c1, del_c2 = st.columns(2)
-                    with del_c1:
-                        if st.button("✅ نعم، تأكيد الحذف النهائي", use_container_width=True, key=f"yes_del_{idx}"):
-                            st.session_state.products_db = st.session_state.products_db.drop(idx).reset_index(drop=True)
-                            st.session_state[f"confirm_del_{idx}"] = False
-                            st.success("🗑️ تم مسح المنتج وإزالته تماماً من قاعدة البيانات.")
-                            st.rerun()
-                    with del_c2:
-                        if st.button("❌ تراجع وإلغاء", use_container_width=True, key=f"no_del_{idx}"):
-                            st.session_state[f"confirm_del_{idx}"] = False
-                            st.rerun()
-                            
-                st.markdown('</div>', unsafe_allow_html=True)
-            else:
-                st.markdown("<p style='text-align:center; color:red; font-weight:bold;'>⚠️ لا يوجد منتج مسجل في النظام بهذا الكود.</p>", unsafe_allow_html=True)
+                del_c1, del_c2 = st.columns(2)
+                with del_c1:
+                    if st.button("✅ نعم، تأكيد الحذف", use_container_width=True, key=f"yd_{idx}"):
+                        st.session_state.products_db = st.session_state.products_db.drop(idx).reset_index(drop=True)
+                        st.session_state[f"confirm_del_{idx}"] = False
+                        st.success("🗑️ تم المسح بنجاح.")
+                        st.rerun()
+                with del_c2:
+                    if st.button("❌ تراجع", use_container_width=True, key=f"nd_{idx}"):
+                        st.session_state[f"confirm_del_{idx}"] = False
+                        st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            if search_c or search_n:
+                st.markdown("<p style='text-align:center; color:red; font-weight:bold;'>⚠️ عذراً، لا يوجد صنف مطابق لبحثك.</p>", unsafe_allow_html=True)
 
     # الخانة الثانية: إضافة منتج يدوياً في بطاقة فارغة موسطة ومتساوية الخانات
     elif menu_choice == "إضافة منتج يدوياً":
         st.markdown('<div class="admin-section-title">إضافة توب جديد للمخزن</div>', unsafe_allow_html=True)
-        st.markdown('<div class="unified-card admin-inputs">', unsafe_allow_html=True)
+        st.markdown('<div class="unified-card">', unsafe_allow_html=True)
         with st.form("add_form_admin", clear_on_submit=True):
             nc = st.text_input("كود المنتج الجديد:")
             nn = st.text_input("اسم النوع الجديد:")
@@ -220,10 +231,10 @@ elif st.session_state.is_admin_logged:
                         "العدد المتوفر": int(n_qty), "التاريخ": now.strftime("%d/%m/%Y"), "الوقت": now.strftime("%I:%M").lstrip("0")
                     }
                     st.session_state.products_db = pd.concat([st.session_state.products_db, pd.DataFrame([new_row])], ignore_index=True)
-                    st.success("✅ تم إضافة التوب الجديد بنجاح وجاهز للعرض بالرئيسية!")
+                    st.success("✅ تم إضافة المنتج الجديد!")
                     st.rerun()
                 else:
-                    st.error("⚠️ يرجى تعبئة خانتي الكود واسم النوع أولاً لإتمام الإضافة.")
+                    st.error("⚠️ يرجى تعبئة خانتي الكود واسم النوع.")
         st.markdown('</div>', unsafe_allow_html=True)
 
     # الخانة الثالثة: خيار ملف Excel وتفريغه بالكامل في المخازن
@@ -250,12 +261,10 @@ elif st.session_state.is_admin_logged:
                         up_df["الوقت"] = now.strftime("%I:%M").lstrip("0")
                         
                         st.session_state.products_db = up_df[req + ["التاريخ", "الوقت"]]
-                        st.success("🎉 ممتاز! تم تفريغ ملف الإكسيل كاملاً وتحويل البيانات لبطاقات متناسقة!")
+                        st.success("🎉 تم تفريغ الإكسيل بنجاح!")
                         st.rerun()
-                else: 
-                    st.error("⚠️ تأكد من كتابة أسماء الأعمدة في الإكسيل بشكل مطابق للتعليمات.")
-            except Exception as e: 
-                st.error(f"❌ حدث خطأ أثناء قراءة الملف: {e}")
+                else: st.error("أسماء الأعمدة غير متطابقة.")
+            except Exception as e: st.error(f"خطأ: {e}")
         st.markdown('</div>', unsafe_allow_html=True)
         
     st.write("---")
@@ -265,7 +274,7 @@ elif st.session_state.is_admin_logged:
         st.rerun()
 
 # -------------------------------------------------------------
-# 🏠 الـواجـهـة الـرئـيـسـيـة للمحل (تظهر للعمال و المرور بشكل طبيعي)
+# 🏠 الـواجـهـة الـرئـيـسـيـة للمحل (تظهر للعمال و المرور)
 # -------------------------------------------------------------
 else:
     st.markdown("""
@@ -276,7 +285,6 @@ else:
     """, unsafe_allow_html=True)
 
     st.write(" ")
-    # خانة البحث الرئيسية الموجهة لليسار بنص شفاف عربي
     query = st.text_input("", placeholder="(اضغط إدخال)           ", label_visibility="collapsed")
 
     if query:
@@ -311,7 +319,6 @@ else:
 
     st.write("---")
 
-    # تبويب آخر الإضافات العريض والموسط والخط العريض تماماً وبدون إيموجيز
     with st.expander("آخر الإضافات"):
         if not st.session_state.products_db.empty:
             for idx, row in st.session_state.products_db.iterrows():
