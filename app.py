@@ -13,12 +13,13 @@ st.markdown("""
     .header-box { text-align: center; margin-top: 5px; margin-bottom: 25px; }
     .main-title { font-size: 38px; font-weight: bold; color: #000000; line-height: 1.0; }
     .shop-title { font-size: 16px; color: #555555; margin-top: 5px; }
-    
-    div[data-testid="stHeader"], input, .stButton>button, div[data-testid="stExpander"] {
-        border-radius: 15px !important;
-    }
-    .stTextInput>div>div>input { text-align: left; direction: ltr; }
-    
+        /* جعل كل الحواف في الموقع منحنية ودائرية */
+    div[data-testid="stForm"] { border-radius: 15px !important; }
+    input { border-radius: 15px !important; }
+    .stButton>button { border-radius: 15px !important; }
+    div[data-testid="stExpander"] { border-radius: 15px !important; }
+    .stTextInput>div>div { border-radius: 15px !important; }
+
     .unified-card {
         border: 2px solid #000000;
         border-radius: 20px;
