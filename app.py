@@ -63,7 +63,7 @@ st.markdown("""
     }
     .top-login-wrapper input { border: none !important; box-shadow: none !important; background: transparent; }
     
-    /* مستطيل موسط فخم لعرض اسم أو عنوان التوب بشكل مستقل */
+    /* مستطيل موسط فخم لعرض العناوين بشكل مستقل وثابت */
     .focus-card-title {
         border: 2px solid #000000;
         border-radius: 15px;
@@ -77,7 +77,6 @@ st.markdown("""
     }
     
     .admin-page-title { font-size: 30px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 20px; }
-    .admin-section-title { font-size: 22px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 15px; }
     
     label { width: 100%; text-align: center !important; display: block !important; font-weight: bold !important; font-size: 15px !important; }
     </style>
@@ -107,7 +106,7 @@ with top_c1:
             st.rerun()
 
 # -------------------------------------------------------------
-# 🔒 بـوابـة المسؤول (المستطيل المنحني النظيف بدون فراغات سوداء)
+# 🔒 بـوابـة المسؤول (مستطيل نظيف تماماً وبدون أي هيدرات مكررة)
 # -------------------------------------------------------------
 if st.session_state.show_admin_flow and not st.session_state.is_admin_logged:
     st.markdown('<div class="top-login-wrapper">', unsafe_allow_html=True)
@@ -133,9 +132,9 @@ elif st.session_state.is_admin_logged:
     
     st.write(" ")
 
-    # الخانة الأولى: التعديل والازالة (بدون مستطيلات فارغة والعدد في النص تماماً)
+    # الخانة الأولى: التعديل والازالة (تم جعل العنوان داخل هيدر المستطيل)
     if menu_choice == "تعديل البيانات الحالية":
-        st.markdown('<div class="admin-section-title">التعديل والازالة</div>', unsafe_allow_html=True)
+        st.markdown('<div class="focus-card-title">التعديل والازالة</div>', unsafe_allow_html=True)
         
         search_c = st.text_input("", placeholder="ابحث بكود المنتج...", key="adm_src_code", label_visibility="collapsed")
         search_n = st.text_input("", placeholder="أو ابحث باسم النوع...", key="adm_src_name", label_visibility="collapsed")
@@ -154,6 +153,7 @@ elif st.session_state.is_admin_logged:
             idx = target_idx
             row = df.loc[idx]
             
+            # مستطيل اسم المنتج يظهر فقط عند العثور عليه بنجاح
             st.markdown(f'<div class="focus-card-title">{row["اسم النوع"]} ({row["الكود"]})</div>', unsafe_allow_html=True)
             
             st.markdown('<div class="unified-card">', unsafe_allow_html=True)
@@ -201,7 +201,7 @@ elif st.session_state.is_admin_logged:
             if search_c or search_n:
                 st.markdown("<p style='text-align:center; color:red; font-weight:bold;'>⚠️ عذراً، لا يوجد صنف مطابق لبحثك.</p>", unsafe_allow_html=True)
 
-    # الخانة الثانية: إضافة نوع جديد يدويا (تم حذف الفراغ ووضع العنوان في المستطيل)
+    # الخانة الثانية: إضافة نوع جديد يدويا داخل مستطيل موسط فخم
     elif menu_choice == "إضافة منتج يدوياً":
         st.markdown('<div class="focus-card-title">إضافة نوع جديد يدوياً</div>', unsafe_allow_html=True)
         st.markdown('<div class="unified-card">', unsafe_allow_html=True)
@@ -229,7 +229,7 @@ elif st.session_state.is_admin_logged:
                     st.error("⚠️ يرجى تعبئة خانتي الكود واسم النوع.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # الخانة الثالثة: خيار ملف Excel (رفع ملف Excel في المستطيل والطلبات الخمسة في سطر واحد)
+    # الخانة الثالثة: خيار ملف Excel
     elif menu_choice == "خيار ملف Excel":
         st.markdown('<div class="focus-card-title">رفع ملف Excel</div>', unsafe_allow_html=True)
         st.markdown('<div class="unified-card">', unsafe_allow_html=True)
