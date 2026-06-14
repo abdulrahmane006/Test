@@ -3,14 +3,14 @@ import pandas as pd
 from datetime import datetime
 
 # 1. إعدادات الصفحة الأساسية
-st.set_page_config(page_title="المخازن - محلات زقزوق", layout="centered")
+st.set_page_config(page_title="المخازن", layout="centered")
 
 # 2. هندسة التصميم بالكامل وتوسيط المدخلات والأرقام
 st.markdown("""
     <style>
     .stApp { direction: RTL; text-align: right; background-color: #ffffff; color: #000000; }
     
-    /* تنسيق الهيدر للواجهة الرئيسية */
+    /* تنسيق الهيدر للواجهة الرئيسية فقط */
     .header-box { text-align: center; margin-top: 5px; margin-bottom: 25px; }
     .main-title { font-size: 38px; font-weight: bold; color: #000000; line-height: 1.0; }
     .shop-title { font-size: 16px; color: #555555; margin-top: 5px; }
@@ -20,9 +20,6 @@ st.markdown("""
         border-radius: 15px !important; 
         text-align: center !important;
     }
-    
-    /* جلب نص التوجيه لخانة البحث الرئيسية لليسار وترجمتها */
-    .main-search input { text-align: left !important; direction: ltr !important; }
     
     /* سحر توسيط الأرقام والنصوص داخل مربعات الإدخال بالكامل بما فيها أرقام الكميات */
     input[type="number"], .stTextInput input { text-align: center !important; }
@@ -56,17 +53,17 @@ st.markdown("""
         text-align: center;
     }
     
-    /* دمج خانة الدخول السري داخل المستطيل العلوي المنحني الفخم */
+    /* دمج خانة الدخول السري داخل المستطيل المنحني الفخم */
     .top-login-wrapper {
         border: 2px solid #000000;
         border-radius: 15px;
         padding: 2px;
         max-width: 100%;
-        margin: 10px auto;
+        margin: 80px auto;
     }
     .top-login-wrapper input { border: none !important; box-shadow: none !important; background: transparent; }
     
-    /* مستطيل موسط فخم لعرض اسم أو كود التوب بشكل مستقل */
+    /* مستطيل موسط فخم لعرض اسم أو عنوان التوب بشكل مستقل */
     .focus-card-title {
         border: 2px solid #000000;
         border-radius: 15px;
@@ -76,13 +73,13 @@ st.markdown("""
         background-color: #ffffff;
         text-align: center;
         margin: 15px auto;
-        max-width: 90%;
+        max-width: 100%;
     }
     
     .admin-page-title { font-size: 30px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 20px; }
     .admin-section-title { font-size: 22px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 15px; }
     
-    label { width: 100%; text-align: center !important; display: block !important; font-weight: bold !important; }
+    label { width: 100%; text-align: center !important; display: block !important; font-weight: bold !important; font-size: 15px !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -110,7 +107,7 @@ with top_c1:
             st.rerun()
 
 # -------------------------------------------------------------
-# 🔒 بـوابـة المسؤول (مدمجة بالكامل داخل المستطيل الفوقاني المنحني)
+# 🔒 بـوابـة المسؤول (المستطيل المنحني النظيف بدون فراغات سوداء)
 # -------------------------------------------------------------
 if st.session_state.show_admin_flow and not st.session_state.is_admin_logged:
     st.markdown('<div class="top-login-wrapper">', unsafe_allow_html=True)
@@ -121,13 +118,12 @@ if st.session_state.show_admin_flow and not st.session_state.is_admin_logged:
     st.markdown('</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# 🛠️ صـفـحـة الـمـسـؤول الـمـطـورة (إدارة الـمـخـازن)
+# 🛠️ صـفـحـة الـمـسـؤول (إدارة الـمـخـازن)
 # -------------------------------------------------------------
 elif st.session_state.is_admin_logged:
     st.markdown('<div class="admin-page-title">إدارة المخازن</div>', unsafe_allow_html=True)
     st.write("---")
     
-    # قائمة المهام المنسدلة التلقائية الموسطة
     with st.expander("قائمة المهام", expanded=True):
         menu_choice = st.selectbox(
             "",
@@ -137,18 +133,16 @@ elif st.session_state.is_admin_logged:
     
     st.write(" ")
 
-    # الخانة الأولى: تعديل البيانات الحالية (منظومة البحث المتبادل الذكية والموسطة بالكامل)
+    # الخانة الأولى: التعديل والازالة (بدون مستطيلات فارغة والعدد في النص تماماً)
     if menu_choice == "تعديل البيانات الحالية":
-        st.markdown('<div class="admin-section-title">البحث عن توب وتعديله أو إزالته</div>', unsafe_allow_html=True)
+        st.markdown('<div class="admin-section-title">التعديل والازالة</div>', unsafe_allow_html=True)
         
-        # خانات البحث المتبادل موسطة ومساوية
         search_c = st.text_input("", placeholder="ابحث بكود المنتج...", key="adm_src_code", label_visibility="collapsed")
         search_n = st.text_input("", placeholder="أو ابحث باسم النوع...", key="adm_src_name", label_visibility="collapsed")
         
         df = st.session_state.products_db
         target_idx = None
         
-        # التحقق من مدخلات البحث الذكي
         if search_c:
             found = df[df['الكود'].astype(str) == str(search_c)].index
             if not found.empty: target_idx = found[0]
@@ -160,10 +154,8 @@ elif st.session_state.is_admin_logged:
             idx = target_idx
             row = df.loc[idx]
             
-            # 1. إظهار اسم المنتج تلقائياً داخل المستطيل الموسط المنحني كما طلبت في الرسمة
             st.markdown(f'<div class="focus-card-title">{row["اسم النوع"]} ({row["الكود"]})</div>', unsafe_allow_html=True)
             
-            # 2. عرض تفاصيل التعديل والتحكم في بطاقة واحدة منحنية وموسطة الأرقام بالكامل
             st.markdown('<div class="unified-card">', unsafe_allow_html=True)
             
             c1, c2, c3 = st.columns(3)
@@ -186,7 +178,7 @@ elif st.session_state.is_admin_logged:
                 st.session_state.products_db.at[idx, "المخزن"] = u_store
                 st.session_state.products_db.at[idx, "التاريخ"] = now.strftime("%d/%m/%Y")
                 st.session_state.products_db.at[idx, "الوقت"] = now.strftime("%I:%M").lstrip("0")
-                st.success("🎉 تم الحفظ وتحديث التوقيت بنجاح!")
+                st.success("🎉 تم الحفظ بنجاح!")
                 st.rerun()
             
             if delete_btn or st.session_state.get(f"confirm_del_{idx}", False):
@@ -209,9 +201,9 @@ elif st.session_state.is_admin_logged:
             if search_c or search_n:
                 st.markdown("<p style='text-align:center; color:red; font-weight:bold;'>⚠️ عذراً، لا يوجد صنف مطابق لبحثك.</p>", unsafe_allow_html=True)
 
-    # الخانة الثانية: إضافة منتج يدوياً في بطاقة فارغة موسطة ومتساوية الخانات
+    # الخانة الثانية: إضافة نوع جديد يدويا (تم حذف الفراغ ووضع العنوان في المستطيل)
     elif menu_choice == "إضافة منتج يدوياً":
-        st.markdown('<div class="admin-section-title">إضافة توب جديد للمخزن</div>', unsafe_allow_html=True)
+        st.markdown('<div class="focus-card-title">إضافة نوع جديد يدوياً</div>', unsafe_allow_html=True)
         st.markdown('<div class="unified-card">', unsafe_allow_html=True)
         with st.form("add_form_admin", clear_on_submit=True):
             nc = st.text_input("كود المنتج الجديد:")
@@ -237,11 +229,12 @@ elif st.session_state.is_admin_logged:
                     st.error("⚠️ يرجى تعبئة خانتي الكود واسم النوع.")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # الخانة الثالثة: خيار ملف Excel وتفريغه بالكامل في المخازن
+    # الخانة الثالثة: خيار ملف Excel (رفع ملف Excel في المستطيل والطلبات الخمسة في سطر واحد)
     elif menu_choice == "خيار ملف Excel":
-        st.markdown('<div class="admin-section-title">رفع وجلب ملف Excel بالكامل للمخزن</div>', unsafe_allow_html=True)
+        st.markdown('<div class="focus-card-title">رفع ملف Excel</div>', unsafe_allow_html=True)
         st.markdown('<div class="unified-card">', unsafe_allow_html=True)
-        st.write("الأعمدة المطلوبة في الملف: `الكود` | `اسم النوع` | `اللون` | `المخزن` | `العدد المتوفر`")
+        st.markdown("<p style='font-size:16px; font-weight:bold; text-align:center;'>الأعمدة المطلوبة في الملف:</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:15px; text-align:center; color:#555555;'>الكود | اسم النوع | اللون | المخزن | العدد المتوفر</p>", unsafe_allow_html=True)
         st.write(" ")
         up_file = st.file_uploader("اختر ملف الإكسيل المطلوب رفعه:", type=["xlsx", "xls"], label_visibility="collapsed")
         
@@ -274,7 +267,7 @@ elif st.session_state.is_admin_logged:
         st.rerun()
 
 # -------------------------------------------------------------
-# 🏠 الـواجـهـة الـرئـيـسـيـة للمحل (تظهر للعمال و المرور)
+# 🏠 الـواجـهـة الـرئـيـسـيـة للمحل (تظهر للعمال و المرور بشكل طبيعي)
 # -------------------------------------------------------------
 else:
     st.markdown("""
