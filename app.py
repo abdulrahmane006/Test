@@ -2,61 +2,78 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-st.set_page_config(page_title="المخازن - محلات زقزوق", layout="centered")
+st.set_page_config(page_title="المخازن", layout="centered")
 
-# تطبيق ستايل الرسمة بالكامل: حواف منحنية، نصوص سوداء، وتنسيق دقيق
+# الستايل المحترف الجديد: توسيط كامل، حواف منحنية، وإلغاء النصوص الجانبية
 st.markdown("""
     <style>
     .stApp { direction: RTL; text-align: right; background-color: #ffffff; color: #000000; }
-    /* تنسيق العنوان الرئيسي المسحوب من رسمتك */
-    .header-box { text-align: center; margin-top: 10px; margin-bottom: 20px; }
-    .main-title { font-size: 28px; font-weight: bold; color: #000000; margin-bottom: 2px; }
-    .sub-title { font-size: 18px; color: #555555; }
-    /* جعل كل الحواف في الموقع منحنية ودائرية */
-    div[data-testid="stForm"], input, .stButton>button, div[data-testid="stExpander"], .stTextInput>div>div {
+    
+    /* تأثير الكيرف المحيط بكلمة المخازن */
+    .header-box { text-align: center; margin-top: 5px; margin-bottom: 25px; }
+    .shop-title { font-size: 16px; color: #555555; letter-spacing: 2px; margin-bottom: -5px; }
+    .main-title { font-size: 36px; font-weight: bold; color: #000000; line-height: 1.1; }
+    
+    /* جعل حواف خانة البحث منحنية وتغيير محاذاة النص الداخلي */
+    div[data-testid="stHeader"], input, .stButton>button, div[data-testid="stExpander"] {
         border-radius: 15px !important;
     }
-    /* ستايل بطاقة نتيجة البحث المنحنية */
-    .result-card {
+    .stTextInput>div>div>input {
+        text-align: left; /* لجعل النص يظهر يسار الخانة */
+        direction: ltr;
+    }
+    
+    /* بطاقة النتيجة المنحنية الموحدة الشاملة لكافة البيانات */
+    .unified-card {
         border: 2px solid #000000;
         border-radius: 20px;
-        padding: 15px;
+        padding: 20px;
         background-color: #ffffff;
         margin-top: 15px;
+        text-align: center;
     }
-    .card-time { font-size: 14px; color: #333333; margin-bottom: 10px; }
-    .card-prod { font-size: 20px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 15px; }
-    /* ستايل مستطيلات آخر الإضافات المنحنية */
-    .added-item {
-        border: 1px solid #777777;
+    .center-datetime { font-size: 14px; color: #444444; text-align: center; margin-bottom: 12px; line-height: 1.3; }
+    .center-prod-title { font-size: 22px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 15px; }
+    
+    /* جدول الأعمدة الداخلي الموسط */
+    .card-columns { display: flex; justify-content: space-around; margin-top: 10px; text-align: center; }
+    .card-col { flex: 1; text-align: center; }
+    .col-label { font-size: 14px; color: #777777; margin-bottom: 4px; }
+    .col-value { font-size: 18px; font-weight: bold; color: #000000; }
+    
+    /* تنسيق تبويب آخر الإضافات */
+    .stExpander > font { font-size: 20px !important; font-weight: bold; }
+    .added-box {
+        border: 1px solid #999999;
         border-radius: 15px;
-        padding: 12px;
+        padding: 15px;
         margin-bottom: 10px;
-        background-color: #fafafa;
+        background-color: #ffffff;
+        text-align: center;
     }
     </style>
 """, unsafe_allow_html=True)
 
 if 'products_db' not in st.session_state:
     st.session_state.products_db = pd.DataFrame([
-        {"الكود": "101", "اسم النوع": "دم غزال", "اللون": "أحمر غامق", "المخزن": "الرف العلوي", "العدد المتوفر": 55, "التاريخ": "13/6/2026", "الوقت": "3:39"}
+        {"الكود": "101", "اسم النوع": "دم غزال", "اللون": "احمر", "المخزن": "العشة", "العدد المتوفر": 3, "التاريخ": "13/6/2026", "الوقت": "3:39"}
     ])
 
-# الترس أعلى اليمين (سنخصص وظيفته لاحقاً بناءً على طلبك)
+# الترس أعلى اليمين
 top_c1, top_c2 = st.columns([1, 9])
 with top_c1:
-    st.button("⚙️", key="settings_btn")
+    st.button("⚙️", key="panel_gear")
 
-# هيدر المحل والعنوان في المنتصف
+# هيدر المحل بتأثير الكيرف الملتف
 st.markdown("""
     <div class="header-box">
+        <div class="shop-title">محلات زقزوق للأقمشة</div>
         <div class="main-title">المخازن</div>
-        <div class="sub-title">محلات زقزوق للأقمشة</div>
     </div>
 """, unsafe_allow_html=True)
 st.write(" ")
-# خانة البحث (ابحث) الخالية تماماً من الكلمات التوجيهية بالداخل
-query = st.text_input("", placeholder="ابحث...", label_visibility="collapsed")
+# خانة البحث وبداخلها التوجيه العربي جهة الشمال ومسح الجملة السفلية تماًماً
+query = st.text_input("", placeholder="(اضغط إدخال)           ", label_visibility="collapsed")
 
 if query:
     df = st.session_state.products_db
@@ -64,41 +81,46 @@ if query:
     
     if not res.empty:
         for idx, row in res.iterrows():
-            # بناء الانبثاق/البطاقة ذات الحواف المنحنية حسب الرسمة بالظبط
+            # بناء البطاقة المدمجة الموسطة بالكامل وبدون إيموجيز
             st.markdown(f"""
-                <div class="result-card">
-                    <div class="card-time">📅 {row['التاريخ']}<br>🕒 {row['الوقت']}</div>
-                    <div class="card-prod">{row['اسم النوع']} ({row['الكود']})</div>
+                <div class="unified-card">
+                    <div class="center-datetime">{row['التاريخ']}<br>{row['الوقت']}</div>
+                    <div class="center-prod-title">{row['اسم النوع']} ({row['الكود']})</div>
+                    <hr style="border: 0.5px solid #eeeeee; margin: 10px 0;">
+                    <div class="card-columns">
+                        <div class="card-col">
+                            <div class="col-label">المكان</div>
+                            <div class="col-value">{row['المخزن']}</div>
+                        </div>
+                        <div class="card-col">
+                            <div class="col-label">العدد</div>
+                            <div class="col-value">{row['العدد المتوفر']}</div>
+                        </div>
+                        <div class="card-col">
+                            <div class="col-label">اللون</div>
+                            <div class="col-value">{row['اللون']}</div>
+                        </div>
+                    </div>
                 </div>
             """, unsafe_allow_html=True)
-            
-            # الـ 3 عواميد أسفل الاسم: اللون - العدد المتوفر - المكان
-            col1, col2, col3 = st.columns(3)
-            with col1: st.text_input("اللون", value=row['اللون'], disabled=True, key=f"c_{idx}")
-            with col2: st.metric(label="العدد المتوفر", value=f"{row['العدد المتوفر']} قطعة")
-            with col3: st.text_input("المكان", value=row['المخزن'], disabled=True, key=f"l_{idx}")
     else:
-        st.warning("⚠️ لا توجد نتائج.")
+        st.markdown("<p style='text-align:center; color:red;'>⚠️ لا توجد نتائج تطابق هذا البحث.</p>", unsafe_allow_html=True)
 
 st.write("---")
-# الزر التفاعلي أسفل البحث "آخر الإضافات"
-with st.expander("✨ آخر الإضافات"):
+# تبويب آخر الإضافات بخط كبير وموسط وبدون إيموجي
+with st.expander("آخر الإضافات"):
     if not st.session_state.products_db.empty:
-        # عرض المنتجات في مستطيلات ذات حواف منحنية (تاريخ ووقت أعلى اليمين، اسم وكود في المنتصف)
         for idx, row in st.session_state.products_db.iterrows():
             st.markdown(f"""
-                <div class="added-item">
-                    <div style="font-size: 12px; color: #555555; float: left; text-align: left;">
-                        📅 {row['التاريخ']}<br>🕒 {row['الوقت']}
+                <div class="added-box">
+                    <div class="center-datetime" style="font-size: 13px; color: #666666;">
+                        {row['التاريخ']}<br>{row['الوقت']}
                     </div>
-                    <div style="clear: both;"></div>
-                    <div style="text-align: center; font-size: 18px; font-weight: bold; margin-top: -15px;">
-                        {row['اسم النوع']}<br>
-                        <span style="font-size: 14px; font-weight: normal; color: #444444;">({row['الكود']})</span>
-                    </div>
+                    <div style="font-size: 20px; font-weight: bold; margin-top: 5px;">{row['اسم النوع']}</div>
+                    <div style="font-size: 15px; color: #444444; margin-top: 2px;">({row['الكود']})</div>
                 </div>
             """, unsafe_allow_html=True)
     else:
-        st.write("لا توجد إضافات حالياً.")
+        st.markdown("<p style='text-align:center;'>لا توجد إضافات حالياً.</p>", unsafe_allow_html=True)
         
 
