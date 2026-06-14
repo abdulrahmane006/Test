@@ -37,6 +37,36 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# 1. قاعدة البيانات الافتراضية - تم إصلاح الأقواس هنا بالكامل
+if 'products_db' not in st.session_state:
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+    st.session_state.products_db = pd.DataFrame([
+        {"الكود": "101", "اسم النوع": "توب قطن حريمي", "اللون": "أسود", "المخزن": "مخزن أ", "العدد المتوفر": 25, "تاريخ آخر تعديل": current_time},
+        {"الكود": "102", "اسم النوع": "توب صوف رجالي", "اللون": "أزرق", "المخزن": "مخزن ب", "العدد المتوفر": 14, "تاريخ آخر تعديل": current_time},
+        {"الكود": "125", "اسم النوع": "دم غزال", "اللون": "أحمر", "المخزن": "المخزن الرئيسي", "العدد المتوفر": 80, "تاريخ آخر تعديل": current_time}
+    ])
+
+# كود المسؤول السري (404)
+ADMIN_PASSWORD = "404"
+
+# وضع أيقونة الترس فوق على اليسار للمسؤول باستخدام أعمدة رشيقة
+top_col1, top_col2 = st.columns([9, 1])
+with top_col2:
+    admin_clicked = st.button("⚙️", help="بوابة المسؤول")
+    if admin_clicked:
+        st.session_state.show_admin_login = not st.session_state.get('show_admin_login', False)
+
+# تفعيل حالة إظهار خانة الكود السري عند الضغط على الترس
+if st.session_state.get('show_admin_login', False):
+    password_input = st.text_input("أدخل كود المسؤول السري:", type="password")
+else:
+    password_input = ""
+
+# العنوان الرئيسي في المنتصف تماماً وبدون أي صناديق
+st.markdown('<div class="main-title">المخاز
+    </style>
+""", unsafe_allow_html=True)
+
 # 1. قاعدة البيانات الافتراضية وهيكلة الأعمدة
 if 'products_db' not in st.session_state:
     current_time = datetime.now().strftime("%Y-%m-%d %H:%M")
