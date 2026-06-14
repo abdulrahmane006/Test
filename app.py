@@ -5,18 +5,20 @@ from datetime import datetime
 # 1. إعدادات الصفحة الأساسية
 st.set_page_config(page_title="المخازن - محلات زقزوق", layout="centered")
 
-# 2. تصميم الواجهة بالكامل (الحواف المنحنية، التوسيط، والتبويب الرأسي لصفحة المسؤول)
+# 2. تصميم الواجهة بالكامل (الحواف المنحنية، التوسيط، والتنسيق الموحد)
 st.markdown("""
     <style>
     .stApp { direction: RTL; text-align: right; background-color: #ffffff; color: #000000; }
     
-    /* تنسيق الهيدر */
+    /* تنسيق الهيدر للواجهة الرئيسية */
     .header-box { text-align: center; margin-top: 5px; margin-bottom: 25px; }
     .main-title { font-size: 38px; font-weight: bold; color: #000000; line-height: 1.0; }
     .shop-title { font-size: 16px; color: #555555; margin-top: 5px; }
     
-    /* جعل كل الحواف في الأزرار والخانات منحنية */
-    input, .stButton>button, div[data-testid="stExpander"] { border-radius: 15px !important; }
+    /* جعل كل الحواف في الأزرار والخانات والقوائم منحنية */
+    input, .stButton>button, div[data-testid="stExpander"], .stSelectbox>div>div { 
+        border-radius: 15px !important; 
+    }
     .stTextInput>div>div>input { text-align: left; direction: ltr; }
     
     /* بطاقة النتيجة المنحنية الموحدة الشاملة */
@@ -37,7 +39,7 @@ st.markdown("""
     .col-label { font-size: 14px; color: #777777; margin-bottom: 4px; }
     .col-value { font-size: 18px; font-weight: bold; color: #000000; }
     
-    /* تخصيص "آخر الإضافات" */
+    /* تخصيص "آخر الإضافات" وقائمة المهام لتكون موسطة وعريضة */
     .stExpanderSummary p { font-size: 22px !important; font-weight: bold !important; text-align: center !important; width: 100%; }
     .added-box {
         border: 1px solid #999999;
@@ -48,17 +50,18 @@ st.markdown("""
         text-align: center;
     }
     
-    /* تخصيص صندوق الكود السري الموسط */
+    /* تخصيص صندوق الكود السري الموسط المنضبط */
     .login-container {
         border: 2px solid #000000;
         border-radius: 20px;
         padding: 25px;
         max-width: 350px;
-        margin: 50px auto;
+        margin: 80px auto;
         text-align: center;
     }
+    .login-label { font-size: 20px; font-weight: bold; color: #000000; margin-bottom: 15px; text-align: center; }
     
-    /* تصميم بطاقات صفحة المسؤول المتتالية */
+    /* تصميم بطاقات صفحة المسؤول بدون تداخل */
     .admin-card {
         border: 2px solid #000000;
         border-radius: 20px;
@@ -67,7 +70,8 @@ st.markdown("""
         margin-bottom: 15px;
         text-align: center;
     }
-    .admin-card-title { font-size: 20px; font-weight: bold; margin-bottom: 10px; text-align: center; }
+    .admin-page-title { font-size: 26px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 20px; }
+    .admin-section-title { font-size: 22px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 15px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -82,12 +86,11 @@ if 'show_admin_flow' not in st.session_state:
 if 'is_admin_logged' not in st.session_state:
     st.session_state.is_admin_logged = False
 
-# 4. الترس أعلى اليمين للتحويل بين الصفحات
+# 4. الترس أعلى اليمين للتحويل بين الصفحات لقفل الجلسة
 top_c1, top_c2 = st.columns([1, 9])
 with top_c1:
     if st.button("⚙️", key="panel_gear"):
         if st.session_state.is_admin_logged:
-            # لو هو مسجل دخول يرجعه للرئيسية أو يقفل
             st.session_state.is_admin_logged = False
             st.session_state.show_admin_flow = False
             st.rerun()
@@ -100,43 +103,39 @@ with top_c1:
 # -------------------------------------------------------------
 if st.session_state.show_admin_flow and not st.session_state.is_admin_logged:
     st.markdown('<div class="login-container">', unsafe_allow_html=True)
-    st.markdown("### ⚙️ إعدادات المطور")
-    pass_in = st.text_input("أدخل الكود", type="password", placeholder="اكتب الكود هنا...")
+    st.markdown('<div class="login-label">ادخل الكود</div>', unsafe_allow_html=True)
+    pass_in = st.text_input("", type="password", placeholder="اكتب الكود هنا...", label_visibility="collapsed")
     if pass_in == "404":
         st.session_state.is_admin_logged = True
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# 🛠️ صـفـحـة الـمـسـؤول الـجـديـدة (عند كتابة كود 404 بنجاح)
+# 🛠️ صـفـحـة الـمـسـؤول الـمـعـدلة (عند كتابة كود 404 بنجاح)
 # -------------------------------------------------------------
 elif st.session_state.is_admin_logged:
-    st.markdown("<h2 style='text-align: center; color: black;'>🛠️ لوحة تحكم محلات زقزوق</h2>", unsafe_allow_html=True)
+    st.markdown('<div class="admin-page-title">لوحة تحكم محلات زقزوق</div>', unsafe_allow_html=True)
     st.write("---")
     
-    # القائمة الرأسية الجانبية ذات الحواف المنحنية على اليمين كما بالرسمة
-    with st.sidebar:
-        st.markdown("<h3 style='text-align: center;'>📋 قائمة المهام</h3>", unsafe_allow_html=True)
-        menu_choice = st.sidebar.radio(
+    # قائمة المهام في المنتصف كخيار تبويب منبثق منحني وموسط يمنع التداخل
+    with st.expander("📋 قائمة المهام"):
+        menu_choice = st.selectbox(
             "",
-            ["✏️ تعديل محلي (البيانات الحالية)", "➕ إضافة منتج يدوياً", "📂 رفع ملف Excel"]
+            ["تعديل البيانات الحالية", "إضافة منتج يدوياً", "خيار ملف Excel"],
+            label_visibility="collapsed"
         )
-        st.write("---")
-        if st.button("🚪 خروج والعودة للرئيسية", use_container_width=True):
-            st.session_state.is_admin_logged = False
-            st.session_state.show_admin_flow = False
-            st.rerun()
+    
+    st.write(" ")
 
-    # الخانة الأولى: تعديل محلي على هيئة بطاقات متتالية منحنية تماثل واجهة العمال
-    if menu_choice == "✏️ تعديل محلي (البيانات الحالية)":
-        st.subheader("✏️ تعديل وجرد البطاقات الحالية يدوياً")
+    # الخانة الأولى: تعديل البيانات الحالية على هيئة بطاقات متتالية موسطة ومنحنية
+    if menu_choice == "تعديل البيانات الحالية":
+        st.markdown('<div class="admin-section-title">تعديل وجرد البطاقات الحالية يدوياً</div>', unsafe_allow_html=True)
         if not st.session_state.products_db.empty:
             updated_rows = []
             for idx, row in st.session_state.products_db.iterrows():
                 st.markdown('<div class="admin-card">', unsafe_allow_html=True)
-                st.markdown(f'<div class="admin-card-title">{row["اسم النوع"]} ({row["الكود"]})</div>', unsafe_allow_html=True)
+                st.markdown(f"<div style='font-size:22px; font-weight:bold; margin-bottom:15px;'>{row['اسم النوع']} ({row['الكود']})</div>", unsafe_allow_html=True)
                 
-                # فتح الصندوق للتعديل اليدوي على كل جزئية ما عدا التاريخ
                 c1, c2, c3 = st.columns(3)
                 with c1: u_color = st.text_input("اللون", value=row["اللون"], key=f"ec_{idx}")
                 with c2: u_qty = st.number_input("العدد", value=int(row["العدد المتوفر"]), min_value=0, step=1, key=f"eq_{idx}")
@@ -152,7 +151,6 @@ elif st.session_state.is_admin_logged:
             if st.button("💾 حفظ التعديلات الحالية وتحديث التواريخ", use_container_width=True):
                 now = datetime.now()
                 final_df = pd.DataFrame(updated_rows)
-                # تحديث التاريخ والوقت تلقائياً للبطاقة التي تم تعديل بياناتها فقط
                 for i in range(len(final_df)):
                     old_r = st.session_state.products_db.iloc[i]
                     new_r = final_df.iloc[i]
@@ -166,10 +164,9 @@ elif st.session_state.is_admin_logged:
             st.info("المخزن فارغ حالياً.")
 
     # الخانة الثانية: إضافة منتج يدوياً في بطاقة فارغة منحنية
-    elif menu_choice == "➕ إضافة منتج يدوياً":
-        st.subheader("➕ إضافة توب جديد يدوياً")
+    elif menu_choice == "إضافة منتج يدوياً":
+        st.markdown('<div class="admin-section-title">بيانات البطاقة الجديدة</div>', unsafe_allow_html=True)
         st.markdown('<div class="admin-card">', unsafe_allow_html=True)
-        st.markdown('<div class="admin-card-title">بيانات البطاقة الجديدة</div>', unsafe_allow_html=True)
         with st.form("add_form_admin", clear_on_submit=True):
             nc = st.text_input("كود المنتج:")
             nn = st.text_input("اسم النوع:")
@@ -193,8 +190,8 @@ elif st.session_state.is_admin_logged:
         st.markdown('</div>', unsafe_allow_html=True)
 
     # الخانة الثالثة: رفع ملف إكسيل وتفريغه لبطاقات متتالية
-    elif menu_choice == "📂 رفع ملف Excel":
-        st.subheader("📂 رفع ملف Excel وتفريغه لبطاقات")
+    elif menu_choice == "خيار ملف Excel":
+        st.markdown('<div class="admin-section-title">رفع ملف Excel وتفريغه لبطاقات</div>', unsafe_allow_html=True)
         st.markdown('<div class="admin-card">', unsafe_allow_html=True)
         st.write("الأعمدة المطلوبة: `الكود` | `اسم النوع` | `اللون` | `المخزن` | `العدد المتوفر`")
         up_file = st.file_uploader("اختر الملف:", type=["xlsx", "xls"])
@@ -214,17 +211,22 @@ elif st.session_state.is_admin_logged:
                         up_df["الوقت"] = now.strftime("%I:%M").lstrip("0")
                         
                         st.session_state.products_db = up_df[req + ["التاريخ", "الوقت"]]
-                        st.success("🎉 تم تفريغ الإكسيل وتحويله لبطاقات متتالية بنجاح!")
+                        st.success("🎉 تم تفريغ الإكسيل بنجاح!")
                         st.rerun()
                 else: st.error("تأكد من أسماء الأعمدة في ملف الإكسيل")
             except Exception as e: st.error(f"خطأ: {e}")
         st.markdown('</div>', unsafe_allow_html=True)
+        
+    st.write("---")
+    if st.button("🚪 خروج والعودة للرئيسية", use_container_width=True):
+        st.session_state.is_admin_logged = False
+        st.session_state.show_admin_flow = False
+        st.rerun()
 
 # -------------------------------------------------------------
-# 🏠 الـواجـهـة الـرئـيـسـيـة للمحل (تظهر للعمال والمرور بشكل طبيعي)
+# 🏠 الـواجـهـة الـرئـيـسـيـة للمحل (تظهر للعمال و المرور)
 # -------------------------------------------------------------
 else:
-    # هيدر المحل المتناسق الموسط
     st.markdown("""
         <div class="header-box">
             <div class="main-title">المخازن</div>
@@ -233,10 +235,8 @@ else:
     """, unsafe_allow_html=True)
 
     st.write(" ")
-    # خانة البحث النظيفة بالكامل وجهة الشمال
     query = st.text_input("", placeholder="(اضغط إدخال)           ", label_visibility="collapsed")
 
-    # معالجة البحث وعرض بطاقة الأعمدة المدمجة الموسطة
     if query:
         df = st.session_state.products_db
         res = df[df['اسم النوع'].str.contains(query, case=False, na=False) | df['الكود'].astype(str).str.contains(query, case=False, na=False)]
@@ -269,7 +269,6 @@ else:
 
     st.write("---")
 
-    # تبويب آخر الإضافات العريض والموسط والخط العريض الـ B
     with st.expander("آخر الإضافات"):
         if not st.session_state.products_db.empty:
             for idx, row in st.session_state.products_db.iterrows():
