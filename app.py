@@ -118,44 +118,56 @@ elif st.session_state.is_admin:
     df_main = st.session_state.db_main
     df_out = st.session_state.db_out
 
+    # [التعديل الجديد للمسؤول]: البحث بالاسم أو الكود وعرض كافة البطاقات المتعددة الأمتار للتعديل والإشراف المباشر
     if menu_choice == "تعديل بيانات المخزن الحالي":
-        st.markdown('<div class="focus-card-title">التعديل والازالة للمخزن الرئيسي</div>', unsafe_allow_html=True)
-        search_c = st.text_input("", placeholder="ابحث بكود المنتج لتعديله...", label_visibility="collapsed")
-        target_idx = df_main[df_main['الكود'].astype(str) == str(search_c)].index if search_c else []
+        st.markdown('<div class="focus-card-title">البحث والتعديل المطور للمخزن الرئيسي</div>', unsafe_allow_html=True)
+        search_c = st.text_input("", placeholder="ابحث باسم الخامة أو بكود المنتج جرد وتعديل فوري...", label_visibility="collapsed")
         
-        if len(target_idx) > 0:
-            idx = target_idx[0]; row = df_main.loc[idx]
+        if search_c and not df_main.empty:
+            # فلترة ذكية تجيب كل السطور اللي تطابق الاسم أو الكود
+            target_df = df_main[df_main['اسم النوع'].str.contains(search_c, case=False, na=False) | df_main['الكود'].astype(str).str.contains(search_c, case=False, na=False)]
             
-            st.markdown(f'<div class="focus-card-title">{row["اسم النوع"]}</div>', unsafe_allow_html=True)
-            st.markdown('<div class="unified-card">', unsafe_allow_html=True)
-            
-            c1, c2, c3, c4 = st.columns(4)
-            with c1: u_name = st.text_input("النوع", value=row["اسم النوع"], key=f"n_{idx}")
-            with c2: u_meters = st.number_input("عدد الامتار", value=float(row.get("عدد الامتار", 0.0)), key=f"m_{idx}")
-            with c3: u_qty = st.number_input("العدد", value=int(row.get("العدد", 0)), key=f"q_{idx}")
-            with c4: u_store = st.text_input("المكان", value=row.get("المكان", "-"), key=f"l_{idx}")
-            
-            st.write(" ")
-            b1, b2 = st.columns(2)
-            with b1:
-                if st.button("💾 حفظ وتحديث لحظي ثابت", use_container_width=True):
-                    current_date, current_time = get_egypt_time()
-                    df_main.at[idx, "اسم النوع"] = u_name
-                    df_main.at[idx, "عدد الامتار"] = u_meters
-                    df_main.at[idx, "العدد"] = u_qty
-                    df_main.at[idx, "المكان"] = u_store
-                    df_main.at[idx, "التاريخ"] = current_date
-                    df_main.at[idx, "الوقت"] = current_time
-                    save_and_sync(df_main, "main")
-                    st.success(f"💾 تم تعديل وحفظ بيانات المنتج ({u_name}) بنجاح تلقائي!")
-                    st.rerun()
-            with b2:
-                if st.button("🗑️ إزالة المنتج نهائياً", use_container_width=True):
-                    df_main = df_main.drop(idx).reset_index(drop=True)
-                    save_and_sync(df_main, "main")
-                    st.success("🗑️ تم مسح الصنف وحفظ التغيير فوراً.")
-                    st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+            if not target_df.empty:
+                st.markdown(f'<p style="text-align:center; color:blue; font-weight:bold;">📋 تم العثور على ({len(target_df)}) بطاقة مسجلة تطابق بحثك:</p>', unsafe_allow_html=True)
+                
+                # عرض كل بطاقة منفصلة مع حقول تعديل خاصة بيها وأزرارها لمنع التداخل
+                for idx in target_df.index:
+                    row = df_main.loc[idx]
+                    st.markdown('<div class="unified-card" style="border-color: red;">', unsafe_allow_html=True)
+                    st.markdown(f'<div class="center-datetime">📅 المسجل في: {row.get("التاريخ", "-")} | {row.get("الوقت", "-")}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="center-prod-title">{row["اسم النوع"]}</div>', unsafe_allow_html=True)
+                    
+                    c1, c2, c3, c4 = st.columns(4)
+                    with c1: u_name = st.text_input("اسم النوع", value=row["اسم النوع"], key=f"n_{idx}")
+                    with c2: u_code = st.text_input("الكود", value=row["الكود"], key=f"c_{idx}")
+                    with c3: u_meters = st.number_input("عدد الامتار الحالية", value=float(row.get("عدد الامتار", 0.0)), key=f"m_{idx}")
+                    with c4: u_qty = st.number_input("العدد (طاقة/ثوب)", value=int(row.get("العدد", 0)), key=f"q_{idx}")
+                    u_store = st.text_input("المكان والرف", value=row.get("المكان", "-"), key=f"l_{idx}")
+                    
+                    st.write(" ")
+                    b1, b2 = st.columns(2)
+                    with b1:
+                        if st.button("💾 حفظ وتحديث لحظي ثابت", key=f"save_btn_{idx}", use_container_width=True):
+                            current_date, current_time = get_egypt_time()
+                            df_main.at[idx, "اسم النوع"] = u_name
+                            df_main.at[idx, "الكود"] = u_code
+                            df_main.at[idx, "عدد الامتار"] = u_meters
+                            df_main.at[idx, "العدد"] = u_qty
+                            df_main.at[idx, "المكان"] = u_store
+                            df_main.at[idx, "التاريخ"] = current_date
+                            df_main.at[idx, "الوقت"] = current_time
+                            save_and_sync(df_main, "main")
+                            st.success(f"💾 تم تحديث وحفظ بطاقة المنتج بنجاح! التوقيت: ({current_time})")
+                            st.rerun()
+                    with b2:
+                        if st.button("🗑️ إزالة المنتج نهائياً", key=f"del_btn_{idx}", use_container_width=True):
+                            df_main = df_main.drop(idx).reset_index(drop=True)
+                            save_and_sync(df_main, "main")
+                            st.success("🗑️ تم مسح الصنف وحفظ التغيير فوراً.")
+                            st.rerun()
+                    st.markdown('</div>', unsafe_allow_html=True)
+            else:
+                st.markdown("<p style='text-align:center; color:red; font-weight:bold;'>⚠️ لا توجد نتائج تطابق هذا البحث في المخزن.</p>", unsafe_allow_html=True)
 
     elif menu_choice == "إضافة منتج يدوياً للمخزن":
         st.markdown('<div class="focus-card-title">إضافة نوع جديد يدوياً للمخزن</div>', unsafe_allow_html=True)
@@ -252,15 +264,12 @@ else:
     df_main = st.session_state.db_main
     df_out = st.session_state.db_out
 
-    # [ملاحظتك الثانية]: تعديل واجهة البحث لتجميع وفصل الأمتار المتعددة لكل كود واسم بوضوح تام لمنع التداخل
     if app_page == "🖥️ عرض بيانات المخزن":
         query = st.text_input("", placeholder="ابحث هنا باسم الخامة أو بالكود واضغط Enter...", label_visibility="collapsed")
         if query and not df_main.empty:
-            # البحث يشمل الاسم أو الكود بالتحديد
             res = df_main[df_main['اسم النوع'].str.contains(query, case=False, na=False) | df_main['الكود'].astype(str).str.contains(query, case=False, na=False)]
             
             if not res.empty:
-                # عرض النتائج في بطاقات منفصلة مفسرة لكل كمية أمتار أو كود مختلف
                 for idx, row in res.iterrows():
                     st.markdown(f"""
                         <div class="unified-card">
@@ -303,7 +312,4 @@ else:
                     new_out = {"الكود": str(out_code), "اسم النوع": str(out_name), "عدد الامتار": out_meters, "العدد": int(out_qty), "المكان": str(out_loc), "اسم التسليم": str(out_receiver), "التاريخ": current_date, "الوقت": current_time}
                     df_out = pd.concat([df_out, pd.DataFrame([new_out])], ignore_index=True)
                     save_and_sync(df_out, "out")
-                    st.success(f"✅ تم حفظ عملية الخارج بنجاح وتوقيت مصر المظبوط! ({current_time})")
-                else: st.markdown("<p style='text-align:center; color:red;'>⚠️ يرجى إدخال كافة البيانات الأساسية لإتمام الحفظ.</p>", unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-        
+                    st.success(f"✅ تم حفظ عملية ا
