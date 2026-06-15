@@ -323,4 +323,3 @@ else:
                         "الكود": str(out_code).strip(),
                         "اسم النوع": str(out_name).strip(),
                         "عدد الامتار": out_meters,
-                        "ال
