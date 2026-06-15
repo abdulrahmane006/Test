@@ -227,7 +227,7 @@ elif st.session_state.is_admin:
                         <div style="font-size: 15px; color: #555555; margin-bottom: 12px; text-align: center;">التسليم: <b>{row.get('اسم التسليم', '-')}</b></div>
                         <div class="card-columns">
                             <div class="card-col"><div class="col-label">الكود</div><div class="col-value">{row['الكود']}</div></div>
-                            <div class="card-col"><div class="col-label">عدد الأمتار</div><div class="col-value">{row['عدد amtar' if '裁 amtar' in row else 'عدد الامتار']}</div></div>
+                            <div class="card-col"><div class="col-label">عدد الأمتار</div><div class="col-value">{row['عدد الامتار']}</div></div>
                             <div class="card-col"><div class="col-label">العدد الخارج</div><div class="col-value">{row['العدد']}</div></div>
                             <div class="card-col"><div class="col-label">المستودع</div><div class="col-value">{row['المكان']}</div></div>
                         </div>
@@ -318,4 +318,4 @@ else:
             if st.form_submit_button("تأكيد تسجيل الخروج وحفظ العملية فوراً", use_container_width=True):
                 if out_code and out_name and out_receiver:
                     current_date, current_time = get_egypt_time()
-                    new_out = {"الكود": str(out_code).strip(), "اسم النوع": str(out_name).strip(), "عدد الامتار": out_meters, "العدد": int(out_qty), "المكان": str(out_loc).strip(), "اسم ا
+                    new_out = {"الكود": str(out_code).strip(), "اسم النوع": str(out_name).strip(), "عدد الامتار": out_meters, "العدد": int(out_qty), "المكان": str(out_loc).strip(), "اسم التسليم": str(out_receiver).strip(), "
