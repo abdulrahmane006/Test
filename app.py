@@ -319,7 +319,7 @@ else:
                     current_date, current_time = get_egypt_time()
                     
                     # الـ dictionary مقسم بالمسطرة، سليم ومحمي 100% من أي خطأ تنصيص ومستحيل يتقص
-                    new_out = {}
-                        "الكود": str(out_code).strip(),
-                        "اسم النوع": str(out_name).strip(),
-                        "عدد الامتار": out_meters,
+                  # new_out = {}
+                      #  "الكود": str(out_code).strip(),
+                       # "اسم النوع": str(out_name).strip(),
+                        #"عدد الامتار": out_meters,
