@@ -1,16 +1,25 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 
-# 1. إعدادات الصفحة الأساسية
+# 1. إعدادات الصفحة الأساسية وثبات قاعدة البيانات
 st.set_page_config(page_title="المخازن", layout="centered")
 
 # أسماء الملفات المحلية الثابتة داخل جيت هاب
 FILE_MAIN = "main_db.csv"
 FILE_OUT = "out_db.csv"
 
-# دالة لقراءة البيانات بأمان
+# دالة ذكية لحساب الوقت الحالي في مصر بالظبط وتجنب توقيت السيرفر العالمي
+def get_egypt_time():
+    # السيرفرات تعمل بتوقيت جرينتش، ومصر تسبقها بـ 3 ساعات بالتوقيت الصيفي الحالي
+    egypt_now = datetime.utcnow() + timedelta(hours=3)
+    date_str = egypt_now.strftime("%d/%m/%Y")
+    time_str = egypt_now.strftime("%I:%M").lstrip("0")
+    ampm = "م" if egypt_now.strftime("%p") == "PM" else "ص"
+    return date_str, f"{time_str} {ampm}"
+
+# دالة لقراءة البيانات المحلية بأمان
 def load_local_data(file_path, default_cols):
     if os.path.exists(file_path):
         try:
@@ -23,7 +32,7 @@ def load_local_data(file_path, default_cols):
     else:
         return pd.DataFrame(columns=default_cols)
 
-# حفظ القراءة في الجلسة لمنع التصفير عند الـ Refresh والتنقل
+# تفعيل التخزين الدائم في الجلسة لمنع التصفير عند التحديث والتنقل
 if 'db_main' not in st.session_state:
     st.session_state.db_main = load_local_data(FILE_MAIN, ["الكود", "اسم النوع", "عدد الامتار", "العدد", "المكان", "التاريخ", "الوقت"])
 if 'db_out' not in st.session_state:
@@ -42,7 +51,7 @@ def save_and_sync(df, target="main"):
         df.to_csv(FILE_OUT, index=False)
         st.session_state.db_out = df
 
-# 2. هندسة التصميم بالكامل والحواف المنحنية وتوسيط النصوص
+# 2. هندسة التصميم بالكامل والحواف المنحنية وتوسيط النصوص والأرقام
 st.markdown("""
     <style>
     .stApp { direction: RTL; text-align: right; background-color: #ffffff; color: #000000; }
@@ -56,8 +65,8 @@ st.markdown("""
     input[type="number"], .stTextInput input { text-align: center !important; }
     
     .unified-card { border: 2px solid #000000; border-radius: 20px; padding: 20px; background-color: #ffffff; margin-top: 15px; text-align: center; }
-    .center-datetime { font-size: 14px; color: #444444; text-align: center; margin-bottom: 12px; line-height: 1.3; }
-    .center-prod-title { font-size: 26px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 15px; }
+    .center-datetime { font-size: 16px; color: #444444; text-align: center; margin-bottom: 12px; line-height: 1.4; font-weight: bold; }
+    .center-prod-title { font-size: 28px; font-weight: bold; color: red; text-align: center; margin-bottom: 15px; }
     
     .card-columns { display: flex; justify-content: space-around; margin-top: 10px; text-align: center; }
     .card-col { flex: 1; text-align: center; }
@@ -93,7 +102,7 @@ if st.session_state.show_admin and not st.session_state.is_admin:
     st.markdown('</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# 🛠️ صـفـحـة الـمـسـؤول (إدارة وجرد وتعديل فوري ثابت للأبد)
+# 🛠️ صـفـحـة الـمـسـؤول (إدارة وجرد وتعديل فوري بتوقيت مصر المظبوط)
 # -------------------------------------------------------------
 elif st.session_state.is_admin:
     st.markdown('<div class="admin-page-title">إدارة المخازن الرقمية</div>', unsafe_allow_html=True)
@@ -131,15 +140,15 @@ elif st.session_state.is_admin:
             b1, b2 = st.columns(2)
             with b1:
                 if st.button("💾 حفظ وتحديث لحظي ثابت", use_container_width=True):
-                    now = datetime.now()
+                    current_date, current_time = get_egypt_time()
                     df_main.at[idx, "اسم النوع"] = u_name
                     df_main.at[idx, "عدد الامتار"] = u_meters
                     df_main.at[idx, "العدد"] = u_qty
                     df_main.at[idx, "المكان"] = u_store
-                    df_main.at[idx, "التاريخ"] = now.strftime("%d/%m/%Y")
-                    df_main.at[idx, "الوقت"] = now.strftime("%I:%M").lstrip("0")
+                    df_main.at[idx, "التاريخ"] = current_date
+                    df_main.at[idx, "الوقت"] = current_time
                     save_and_sync(df_main, "main")
-                    st.success("🎉 تم حفظ التعديل لحظياً بنجاح تام!")
+                    st.success("🎉 تم حفظ التعديل بتوقيت مصر الحالي!")
                     st.rerun()
             with b2:
                 if st.button("🗑️ إزالة المنتج نهائياً", use_container_width=True):
@@ -150,7 +159,7 @@ elif st.session_state.is_admin:
             st.markdown('</div>', unsafe_allow_html=True)
 
     elif menu_choice == "إضافة منتج يدوياً للمخزن":
-        st.markdown('<div class="focus-card-title">إضافة نوع جديد يدوياً للمخزن الحفظ الثابت</div>', unsafe_allow_html=True)
+        st.markdown('<div class="focus-card-title">إضافة نوع جديد يدوياً للمخزن</div>', unsafe_allow_html=True)
         st.markdown('<div class="unified-card">', unsafe_allow_html=True)
         with st.form("add_m_form"):
             nc = st.text_input("كود المنتج الجديد:")
@@ -162,16 +171,16 @@ elif st.session_state.is_admin:
             
             if st.form_submit_button("➕ تأكيد إضافة البطاقة وحفظها لحظياً", use_container_width=True):
                 if nc and nn:
-                    now = datetime.now()
-                    new_r = {"الكود": str(nc), "اسم النوع": str(nn), "عدد الامتار": nm, "العدد": int(nq), "المكان": str(nl), "التاريخ": now.strftime("%d/%m/%Y"), "الوقت": now.strftime("%I:%M").lstrip("0")}
+                    current_date, current_time = get_egypt_time()
+                    new_r = {"الكود": str(nc), "اسم النوع": str(nn), "عدد الامتار": nm, "العدد": int(nq), "المكان": str(nl), "التاريخ": current_date, "الوقت": current_time}
                     df_main = pd.concat([df_main, pd.DataFrame([new_r])], ignore_index=True)
                     save_and_sync(df_main, "main")
-                    st.success("✅ تم إضافة المنتج وحفظه بنجاح واستقرار!")
+                    st.success("✅ تم إضافة المنتج وحفظه بالتوقيت المحلي المظبوط!")
                     st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
     elif menu_choice == "خيار ملف Excel للمخزن":
-        st.markdown('<div class="focus-card-title">رفع ملف Excel للمخزن الرئيسي الحفظ الثابت</div>', unsafe_allow_html=True)
+        st.markdown('<div class="focus-card-title">رفع ملف Excel للمخزن الرئيسي</div>', unsafe_allow_html=True)
         st.markdown('<div class="unified-card">', unsafe_allow_html=True)
         up_file = st.file_uploader("اختر ملف الإكسيل:", type=["xlsx", "xls"], label_visibility="collapsed")
         if up_file is not None:
@@ -180,15 +189,15 @@ elif st.session_state.is_admin:
                 req = ["الكود", "اسم النوع", "عدد الامتار", "العدد", "المكان"]
                 if not [c for c in req if c not in up_df.columns]:
                     if st.button("🚀 تفريغ واعتماد ملف الإكسيل فوراً", use_container_width=True):
-                        now = datetime.now()
+                        current_date, current_time = get_egypt_time()
                         up_df["الكود"] = up_df["الكود"].astype(str)
-                        up_df["التاريخ"] = now.strftime("%d/%m/%Y")
-                        up_df["الوقت"] = now.strftime("%I:%M").lstrip("0")
+                        up_df["التاريخ"] = current_date
+                        up_df["الوقت"] = current_time
                         final_df = up_df[req + ["التاريخ", "الوقت"]]
                         save_and_sync(final_df, "main")
-                        st.success("🎉 تم رص البيانات وحفظها بنجاح واشتغلت تمام!")
+                        st.success("🎉 تم رص البيانات وحفظ ملف الإكسيل بنجاح!")
                         st.rerun()
-                else: st.error("أعمدة ملف الإكسيل غير مطابقة للترتيب المطلوبة.")
+                else: st.error("أعمدة ملف الإكسيل غير مطابقة للترتيب المطلوب.")
             except Exception as e: st.error(f"خطأ: {e}")
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -199,8 +208,8 @@ elif st.session_state.is_admin:
                 st.markdown(f"""
                     <div class="added-box">
                         <div class="center-datetime">📅 {row.get('التاريخ', '-')}<br>🕒 {row.get('الوقت', '-')}</div>
-                        <div style="font-size: 22px; font-weight: bold; color: red;">{row['اسم النوع']}</div>
-                        <div style="font-size: 14px; color: #555555; margin-bottom: 8px;">ملاحظة باسم التسليم: <b>{row.get('اسم التسليم', '-')}</b></div>
+                        <div class="center-prod-title">{row['اسم النوع']}</div>
+                        <div style="font-size: 15px; color: #555555; margin-bottom: 12px; text-align: center;">ملاحظة باسم التسليم: <b>{row.get('اسم التسليم', '-')}</b></div>
                         <div class="card-columns">
                             <div class="card-col"><div class="col-label">الكود</div><div class="col-value">{row['الكود']}</div></div>
                             <div class="card-col"><div class="col-label">عدد الأمتار</div><div class="col-value">{row['عدد الامتار']}</div></div>
@@ -226,14 +235,15 @@ elif st.session_state.is_admin:
                 else:
                     if st.button(f"🗑️ إزالة بطاقة التسليم ({row['اسم النوع']})", key=f"out_del_btn_{idx}", use_container_width=True):
                         st.session_state.del_out_idx = idx; st.rerun()
-        else: st.info("شيت التسليمات فارغ حالياً.")
+        else:
+            st.markdown('<div class="unified-card" style="border-color: #d9md; background-color: #f4f6f9;"><p style="color: #4f5d75; font-size: 16px; margin: 0;">شيت التسليمات فارغ حالياً ولا توجد بضائع خارجة مسجلة.</p></div>', unsafe_allow_html=True)
 
     st.write("---")
     if st.button("🚪 خروج والعودة لواجهة العمال الرئيسية", use_container_width=True):
         st.session_state.is_admin = False; st.session_state.show_admin = False; st.rerun()
 
 # -------------------------------------------------------------
-# 🏠 الـواجـهـة الـرئـيـسـيـة للمحل (حفظ لحظي فوري آمن للعمال)
+# 🏠 الـواجـهـة الـرئـيـسـيـة للمحل (تظهر للعمال بشكل مباشر وثابت)
 # -------------------------------------------------------------
 else:
     st.markdown('<div class="header-box"><div class="main-title">المخازن</div><div class="shop-title">محلات زقزوق للأقمشة</div></div>', unsafe_allow_html=True)
@@ -251,8 +261,8 @@ else:
                 for idx, row in res.iterrows():
                     st.markdown(f"""
                         <div class="unified-card">
-                            <div class="center-datetime">{row.get('التاريخ', '15/06/2026')}<br>{row.get('الوقت', '03:00')}</div>
-                            <div class="center-prod-title">{row['اسم النوع']}</div>
+                            <div class="center-datetime">📅 {row.get('التاريخ', '')}<br>🕒 {row.get('الوقت', '')}</div>
+                            <div class="center-prod-title" style="color:black;">{row['اسم النوع']}</div>
                             <hr style="border: 0.5px solid #eeeeee; margin: 10px 0;">
                             <div class="card-columns">
                                 <div class="card-col"><div class="col-label">النوع</div><div class="col-value">{row['اسم النوع']}</div></div>
@@ -285,11 +295,11 @@ else:
             st.write(" ")
             if st.form_submit_button("🚀 تأكيد تسجيل الخروج وحفظ العملية فوراً", use_container_width=True):
                 if out_code and out_name and out_receiver:
-                    now = datetime.now()
-                    new_out = {"الكود": str(out_code), "اسم النوع": str(out_name), "عدد الامتار": out_meters, "العدد": int(out_qty), "المكان": str(out_loc), "اسم التسليم": str(out_receiver), "التاريخ": now.strftime("%d/%m/%Y"), "الوقت": now.strftime("%I:%M").lstrip("0")}
+                    current_date, current_time = get_egypt_time()
+                    new_out = {"الكود": str(out_code), "اسم النوع": str(out_name), "عدد الامتار": out_meters, "العدد": int(out_qty), "المكان": str(out_loc), "اسم التسليم": str(out_receiver), "التاريخ": current_date, "الوقت": current_time}
                     df_out = pd.concat([df_out, pd.DataFrame([new_out])], ignore_index=True)
                     save_and_sync(df_out, "out")
-                    st.success(f"✅ تم حفظ عملية الخارج تلقائياً ولحظياً في السيرفر!")
+                    st.success(f"✅ تم حفظ عملية الخارج بنجاح وتوقيت مصر المظبوط! ({current_time})")
                 else: st.markdown("<p style='text-align:center; color:red;'>⚠️ يرجى إدخال كافة البيانات الأساسية لإتمام الحفظ.</p>", unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-                
+                    
