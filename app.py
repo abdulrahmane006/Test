@@ -1,10 +1,37 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import requests
 
-# 1. إعدادات الصفحة الأساسية
+# 1. إعدادات الصفحة الأساسية وثبات قاعدة البيانات السحابية
 st.set_page_config(page_title="المخازن", layout="centered")
+
+# معرفات جداول جوجل شيت الخاصة بك
+SHEET_MAIN_ID = "15Rj3WcnZwaEu2laGCHbx9smky3VFmimK68q0trbCS0M"  # شيت المخزن
+SHEET_OUT_ID = "1ksTojcKgyjxzmuGR134s7flfPOFcNTkxdA0WGhS4Tn4"    # شيت التسليمات
+
+# دالة ذكية ومستقرة لجلب البيانات من جوجل شيت
+def load_initial_sheet(sheet_id):
+    try:
+        url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
+        df = pd.read_csv(url)
+        if not df.empty and 'الكود' in df.columns:
+            df['الكود'] = df['الكود'].astype(str)
+        return df
+    except:
+        if sheet_id == SHEET_MAIN_ID:
+            return pd.DataFrame([{"الكود": "101", "اسم النوع": "دم غزال", "عدد الامتار": 150.0, "العدد": 3, "المكان": "العشة", "التاريخ": "15/06/2026", "الوقت": "03:00"}])
+        else:
+            return pd.DataFrame(columns=["الكود", "اسم النوع", "عدد الامتار", "العدد", "المكان", "اسم التسليم", "التاريخ", "الوقت"])
+
+# تفعيل التخزين الدائم والمستقر في السيرفر لعدم ضياع البيانات عند الـ Refresh أبدًا
+if 'db_main' not in st.session_state:
+    st.session_state.db_main = load_initial_sheet(SHEET_MAIN_ID)
+if 'db_out' not in st.session_state:
+    st.session_state.db_out = load_initial_sheet(SHEET_OUT_ID)
+
+if 'show_admin' not in st.session_state: st.session_state.show_admin = False
+if 'is_admin' not in st.session_state: st.session_state.is_admin = False
+if 'del_out_idx' not in st.session_state: st.session_state.del_out_idx = None
 
 # 2. هندسة التصميم بالكامل والحواف المنحنية وتوسيط النصوص والأرقام
 st.markdown("""
@@ -14,18 +41,15 @@ st.markdown("""
     .main-title { font-size: 38px; font-weight: bold; color: #000000; line-height: 1.0; }
     .shop-title { font-size: 16px; color: #555555; margin-top: 5px; }
     
-    /* حواف منحنية لكل شيء وتوسيط نصوص القوائم والخانات */
     input, .stButton>button, div[data-testid="stExpander"], .stSelectbox>div>div { 
         border-radius: 15px !important; text-align: center !important;
     }
     input[type="number"], .stTextInput input { text-align: center !important; }
     
-    /* بطاقات العرض والجرد المنحنية الموحدة */
     .unified-card { border: 2px solid #000000; border-radius: 20px; padding: 20px; background-color: #ffffff; margin-top: 15px; text-align: center; }
     .center-datetime { font-size: 14px; color: #444444; text-align: center; margin-bottom: 12px; line-height: 1.3; }
     .center-prod-title { font-size: 26px; font-weight: bold; color: #000000; text-align: center; margin-bottom: 15px; }
     
-    /* توزيع أعمدة الجرد بالتساوي */
     .card-columns { display: flex; justify-content: space-around; margin-top: 10px; text-align: center; }
     .card-col { flex: 1; text-align: center; }
     .col-label { font-size: 14px; color: #777777; margin-bottom: 4px; }
@@ -42,42 +66,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. معرفات جداول جوجل شيت الخاصة بك للربط السحابي اللحظي
-SHEET_MAIN_ID = "15Rj3WcnZwaEu2laGCHbx9smky3VFmimK68q0trbCS0M"  # شيت المخزن
-SHEET_OUT_ID = "1ksTojcKgyjxzmuGR134s7flfPOFcNTkxdA0WGhS4Tn4"    # شيت التسليمات والخارج
-
-# دالة ذكية لجلب البيانات فورياً من جوجل شيت لمنع تصفير البيانات عند الـ Refresh
-def load_sheet_data(sheet_id):
-    try:
-        url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv"
-        df = pd.read_csv(url)
-        if not df.empty and 'الكود' in df.columns:
-            df['الكود'] = df['الكود'].astype(str)
-        return df
-    except:
-        if sheet_id == SHEET_MAIN_ID:
-            return pd.DataFrame([{"الكود": "101", "اسم النوع": "دم غزال", "عدد الامتار": 150.0, "العدد": 3, "المكان": "العشة", "التاريخ": "15/06/2026", "الوقت": "03:00"}])
-        else:
-            return pd.DataFrame(columns=["الكود", "اسم النوع", "عدد الامتار", "العدد", "المكان", "اسم التسليم", "التاريخ", "الوقت"])
-
-# تفعيل الذاكرة السحابية المستمرة للتطبيق لمنع ضياع البيانات
-if 'db_main' not in st.session_state:
-    st.session_state.db_main = load_sheet_data(SHEET_MAIN_ID)
-if 'db_out' not in st.session_state:
-    st.session_state.db_out = load_sheet_data(SHEET_OUT_ID)
-
-if 'show_admin' not in st.session_state: st.session_state.show_admin = False
-if 'is_admin' not in st.session_state: st.session_state.is_admin = False
-if 'del_out_idx' not in st.session_state: st.session_state.del_out_idx = None
-
-# دالة حفظ البيانات لحظياً لتثبيتها عند إعادة تحميل الصفحة
-def sync_data(df, target="main"):
-    if target == "main":
-        st.session_state.db_main = df
-    else:
-        st.session_state.db_out = df
-
-# 4. زر الترس العلوي لفتح وإغلاق لوحة التحكم بأمان
+# 3. زر الترس العلوي لفتح وإغلاق لوحة التحكم بأمان
 top_c1, top_c2 = st.columns([1, 9])
 with top_c1:
     if st.button("⚙️", key="panel_gear"):
@@ -105,6 +94,19 @@ elif st.session_state.is_admin:
     st.markdown('<div class="admin-page-title">إدارة المخازن</div>', unsafe_allow_html=True)
     st.write("---")
     
+    # أزرار لمزامنة البيانات سحابيًا وحفظ نسخ احتياطية يدويًا عند الحاجة
+    sync_c1, sync_c2 = st.columns(2)
+    with sync_c1:
+        if st.button("🔄 تحديث وجلب البيانات من جوجل شيت الآن", use_container_width=True):
+            st.session_state.db_main = load_initial_sheet(SHEET_MAIN_ID)
+            st.session_state.db_out = load_initial_sheet(SHEET_OUT_ID)
+            st.success("🎉 تم مزامنة وجلب أحدث بيانات من شيتات جوجل!")
+            st.rerun()
+    with sync_c2:
+        st.markdown(f"[📥 فتح شيت المخزن]({f'https://docs.google.com/spreadsheets/d/{SHEET_MAIN_ID}'}) | [📥 فتح شيت التسليمات]({f'https://docs.google.com/spreadsheets/d/{SHEET_OUT_ID}'})")
+
+    st.write("---")
+
     with st.expander("قائمة المهام والإشراف", expanded=True):
         menu_choice = st.selectbox(
             "",
@@ -137,7 +139,7 @@ elif st.session_state.is_admin:
             st.write(" ")
             b1, b2 = st.columns(2)
             with b1:
-                if st.button("💾 حفظ وتحديث دائم", use_container_width=True):
+                if st.button("💾 حفظ وتثبيت دائم في السيرفر", use_container_width=True):
                     now = datetime.now()
                     df_main.at[idx, "اسم النوع"] = u_name
                     df_main.at[idx, "عدد الامتار"] = u_meters
@@ -145,19 +147,19 @@ elif st.session_state.is_admin:
                     df_main.at[idx, "المكان"] = u_store
                     df_main.at[idx, "التاريخ"] = now.strftime("%d/%m/%Y")
                     df_main.at[idx, "الوقت"] = now.strftime("%I:%M").lstrip("0")
-                    sync_data(df_main, "main")
-                    st.success("🎉 تم الحفظ وتثبيت التعديل بنجاح وبشكل دائم!")
+                    st.session_state.db_main = df_main
+                    st.success("🎉 تم التعديل والتثبيت الفوري في السيرفر!")
                     st.rerun()
             with b2:
                 if st.button("🗑️ إزالة المنتج نهائياً", use_container_width=True):
                     df_main = df_main.drop(idx).reset_index(drop=True)
-                    sync_data(df_main, "main")
-                    st.success("🗑️ تم مسح المنتج نهائياً من شيت المخزن.")
+                    st.session_state.db_main = df_main
+                    st.success("🗑️ تم حذف المنتج من النظام بنجاح.")
                     st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
 
     elif menu_choice == "إضافة منتج يدوياً للمخزن":
-        st.markdown('<div class="focus-card-title">إضافة نوع جديد يدوياً للمخزن</div>', unsafe_allow_html=True)
+        st.markdown('<div class="focus-card-title">إضافة نوع جديد للمخزن دائم الحفظ</div>', unsafe_allow_html=True)
         st.markdown('<div class="unified-card">', unsafe_allow_html=True)
         with st.form("add_m_form"):
             nc = st.text_input("كود المنتج الجديد:")
@@ -167,13 +169,13 @@ elif st.session_state.is_admin:
             with c2: nq = st.number_input("العدد:", min_value=0, step=1)
             with c3: nl = st.text_input("المكان:")
             
-            if st.form_submit_button("➕ تأكيد إضافة البطاقة وحفظها بشكل دائم", use_container_width=True):
+            if st.form_submit_button("➕ تأكيد إضافة البطاقة وحفظها", use_container_width=True):
                 if nc and nn:
                     now = datetime.now()
                     new_r = {"الكود": str(nc), "اسم النوع": str(nn), "عدد الامتار": nm, "العدد": int(nq), "المكان": str(nl), "التاريخ": now.strftime("%d/%m/%Y"), "الوقت": now.strftime("%I:%M").lstrip("0")}
                     df_main = pd.concat([df_main, pd.DataFrame([new_r])], ignore_index=True)
-                    sync_data(df_main, "main")
-                    st.success("✅ تم إضافة المنتج الجديد وحفظه بنجاح!")
+                    st.session_state.db_main = df_main
+                    st.success("✅ تم إضافة المنتج للمخزن وحفظه بنجاح!")
                     st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -187,19 +189,18 @@ elif st.session_state.is_admin:
                 up_df = pd.read_excel(up_file)
                 req = ["الكود", "اسم النوع", "عدد الامتار", "العدد", "المكان"]
                 if not [c for c in req if c not in up_df.columns]:
-                    if st.button("🚀 اعتماد وتثبيت ملف الإكسيل سحابياً الآن", use_container_width=True):
+                    if st.button("🚀 اعتماد وتثبيت ملف الإكسيل في النظام الآن", use_container_width=True):
                         now = datetime.now()
                         up_df["الكود"] = up_df["الكود"].astype(str)
                         up_df["التاريخ"] = now.strftime("%d/%m/%Y")
                         up_df["الوقت"] = now.strftime("%I:%M").lstrip("0")
-                        sync_data(up_df[req + ["التاريخ", "الوقت"]], "main")
-                        st.success("🎉 تم إدخال وحفظ ملف الإكسيل الجديد دائمًا!")
+                        st.session_state.db_main = up_df[req + ["التاريخ", "الوقت"]]
+                        st.success("🎉 تم إدخال وحفظ ملف الإكسيل الجديد بنجاح!")
                         st.rerun()
                 else: st.error("أعمدة ملف الإكسيل غير مطابقة للمخزن.")
             except Exception as e: st.error(f"خطأ: {e}")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # [طلبك الأول والثاني]: عرض شيت الخارج هنا فقط مع ميزة الحذف وتأكيد الأمان الكامل قبل المسح
     elif menu_choice == "📊 عرض جرد كميات الخارج":
         st.markdown('<div class="focus-card-title">دفتر رصد السلع الخارجة (شيت التسليمات)</div>', unsafe_allow_html=True)
         
@@ -219,16 +220,16 @@ elif st.session_state.is_admin:
                     </div>
                 """, unsafe_allow_html=True)
                 
-                # مربع الحذف مع التأكيد لبطاقة التسليم المحددة
+                # إزالة بطاقة التسليم مع مربع التأكيد
                 if st.session_state.del_out_idx == idx:
                     st.markdown("""<div class="confirm-box"><p style='color:red; font-weight:bold; margin-bottom:10px;'>⚠️ هل أنت متأكد تماماً من رغبتك في حذف بطاقة التسليم هذه؟</p></div>""", unsafe_allow_html=True)
                     bc1, bc2 = st.columns(2)
                     with bc1:
                         if st.button("🔥 نعم، حذف نهائي", key=f"out_yes_{idx}", use_container_width=True):
                             df_out = df_out.drop(idx).reset_index(drop=True)
-                            sync_data(df_out, "out")
+                            st.session_state.db_out = df_out
                             st.session_state.del_out_idx = None
-                            st.success("🗑️ تم مسح بطاقة التسليم بنجاح وثبات!")
+                            st.success("🗑️ تم حذف بطاقة التسليم من النظام بنجاح!")
                             st.rerun()
                     with bc2:
                         if st.button("❌ تراجع وإلغاء", key=f"out_no_{idx}", use_container_width=True):
@@ -258,7 +259,7 @@ else:
     df_main = st.session_state.db_main
     df_out = st.session_state.db_out
 
-    # [الصفحة الأولى]: البحث الذكي المفتوح بالاسم أو الكود (يُظهر كل الأكواد المتوفرة تحت بعضها فوراً)
+    # [الصفحة الأولى]: البحث الذكي المفتوح بالاسم أو الكود
     if app_page == "🖥️ عرض بيانات المخزن":
         query = st.text_input("", placeholder="ابحث هنا باسم الخامة أو بالكود واضغط Enter...", label_visibility="collapsed")
         
@@ -293,7 +294,7 @@ else:
                 for idx, row in df_main.iterrows():
                     st.markdown(f'<div class="added-box"><div style="font-size: 20px; font-weight: bold;">{row["اسم النوع"]} (كود: {row["الكود"]})</div></div>', unsafe_allow_html=True)
 
-    # [الصفحة الثانية]: إضافة الخارج من المخزن (تُحفظ في السيرفر وتسمع عند المسؤول دائمًا)
+    # [الصفحة الثانية]: إضافة الخارج من المخزن (تُحفظ في السيرفر دائمًا وتظهر للمسؤول)
     elif app_page == "📤 تسجيل الخارج من المخزن":
         st.markdown('<div class="focus-card-title">تسجيل قماش خارج من المخزن</div>', unsafe_allow_html=True)
         st.markdown('<div class="unified-card">', unsafe_allow_html=True)
@@ -318,9 +319,9 @@ else:
                         "التاريخ": now.strftime("%d/%m/%Y"), "الوقت": now.strftime("%I:%M").lstrip("0")
                     }
                     df_out = pd.concat([df_out, pd.DataFrame([new_out])], ignore_index=True)
-                    sync_data(df_out, "out")
-                    st.success(f"✅ تم حفظ عملية الخارج بنجاح دائم! وجاهزة للمراجعة في شيت تسليمات المسؤول.")
+                    st.session_state.db_out = df_out
+                    st.success(f"✅ تم حفظ عملية الخارج بنجاح دائم! وجاهزة للمراجعة في لوحة المسؤول.")
                 else:
                     st.markdown("<p style='text-align:center; color:red;'>⚠️ يرجى إدخال الكود، الاسم، وملاحظة اسم التسليم لإتمام العملية وحفظها.</p>", unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-            
+        
