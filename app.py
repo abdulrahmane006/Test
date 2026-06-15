@@ -118,19 +118,16 @@ elif st.session_state.is_admin:
     df_main = st.session_state.db_main
     df_out = st.session_state.db_out
 
-    # [التعديل الجديد للمسؤول]: البحث بالاسم أو الكود وعرض كافة البطاقات المتعددة الأمتار للتعديل والإشراف المباشر
     if menu_choice == "تعديل بيانات المخزن الحالي":
         st.markdown('<div class="focus-card-title">البحث والتعديل المطور للمخزن الرئيسي</div>', unsafe_allow_html=True)
         search_c = st.text_input("", placeholder="ابحث باسم الخامة أو بكود المنتج جرد وتعديل فوري...", label_visibility="collapsed")
         
         if search_c and not df_main.empty:
-            # فلترة ذكية تجيب كل السطور اللي تطابق الاسم أو الكود
             target_df = df_main[df_main['اسم النوع'].str.contains(search_c, case=False, na=False) | df_main['الكود'].astype(str).str.contains(search_c, case=False, na=False)]
             
             if not target_df.empty:
                 st.markdown(f'<p style="text-align:center; color:blue; font-weight:bold;">📋 تم العثور على ({len(target_df)}) بطاقة مسجلة تطابق بحثك:</p>', unsafe_allow_html=True)
                 
-                # عرض كل بطاقة منفصلة مع حقول تعديل خاصة بيها وأزرارها لمنع التداخل
                 for idx in target_df.index:
                     row = df_main.loc[idx]
                     st.markdown('<div class="unified-card" style="border-color: red;">', unsafe_allow_html=True)
@@ -157,7 +154,7 @@ elif st.session_state.is_admin:
                             df_main.at[idx, "التاريخ"] = current_date
                             df_main.at[idx, "الوقت"] = current_time
                             save_and_sync(df_main, "main")
-                            st.success(f"💾 تم تحديث وحفظ بطاقة المنتج بنجاح! التوقيت: ({current_time})")
+                            st.success("💾 تم تحديث وحفظ بطاقة المنتج بنجاح!")
                             st.rerun()
                     with b2:
                         if st.button("🗑️ إزالة المنتج نهائياً", key=f"del_btn_{idx}", use_container_width=True):
@@ -186,7 +183,7 @@ elif st.session_state.is_admin:
                     new_r = {"الكود": str(nc), "اسم النوع": str(nn), "عدد الامتار": nm, "العدد": int(nq), "المكان": str(nl), "التاريخ": current_date, "الوقت": current_time}
                     df_main = pd.concat([df_main, pd.DataFrame([new_r])], ignore_index=True)
                     save_and_sync(df_main, "main")
-                    st.success(f"✅ تم إضافة القماش الجديد ({nn}) وحفظه بنجاح واستقرار!")
+                    st.success("✅ تم إضافة القماش الجديد وحفظه بنجاح واستقرار!")
                     st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -279,7 +276,7 @@ else:
                             <div class="card-columns">
                                 <div class="card-col"><div class="col-label">النوع</div><div class="col-value">{row['اسم النوع']}</div></div>
                                 <div class="card-col"><div class="col-label">الكود</div><div class="col-value">{row['الكود']}</div></div>
-                                <div class="card-col"><div class="col-label">عدد الأمتار الثابتة</div><div class="col-value" style="color: green; font-size: 19px;">{row['عدد الامتار']}</div></div>
+                                <div class="card-col"><div class="col-label">عدد الأمتار الثابتة</div><div class="col-value" style="color: green; font-size: 19px;">{row['عدد amtar' if '裁 amtar' in row else 'عدد الامتار']}</div></div>
                                 <div class="card-col"><div class="col-label">العدد</div><div class="col-value">{row['العدد']}</div></div>
                                 <div class="card-col"><div class="col-label">المكان</div><div class="col-value">{row['المكان']}</div></div>
                             </div>
@@ -312,4 +309,7 @@ else:
                     new_out = {"الكود": str(out_code), "اسم النوع": str(out_name), "عدد الامتار": out_meters, "العدد": int(out_qty), "المكان": str(out_loc), "اسم التسليم": str(out_receiver), "التاريخ": current_date, "الوقت": current_time}
                     df_out = pd.concat([df_out, pd.DataFrame([new_out])], ignore_index=True)
                     save_and_sync(df_out, "out")
-                    st.success(f"✅ تم حفظ عملية ا
+                    st.success(f"✅ تم حفظ عملية الخارج بنجاح وتوقيت مصر المظبوط! ({current_time})")
+                else: st.markdown("<p style='text-align:center; color:red;'>⚠️ يرجى إدخال كافة البيانات الأساسية لإتمام الحفظ.</p>", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
