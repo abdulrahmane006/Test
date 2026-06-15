@@ -125,7 +125,6 @@ elif st.session_state.is_admin:
         
         if search_c and not df_main.empty:
             q_clean = search_c.strip()
-            # فلترة ذكية: تبحث بالاسم أولاً، وتدعم الكود كخيار ثانوي مع المسافات
             target_df = df_main[
                 df_main['اسم النوع'].str.contains(q_clean, case=False, na=False) | 
                 df_main['الكود'].astype(str).str.contains(q_clean, case=False, na=False) |
@@ -138,7 +137,7 @@ elif st.session_state.is_admin:
                 for idx in target_df.index:
                     row = df_main.loc[idx]
                     st.markdown('<div class="unified-card" style="border-color: red;">', unsafe_allow_html=True)
-                    st.markdown(f'<div class="center-datetime">المسجل في: {row.get("التاريخ", "-")} | {row.get("الوقت", "-")}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div class="center-datetime">المسجل في: {row.get("التاريخ", "-")} | {row.get("Clarification", row.get("الوقت", "-"))}</div>', unsafe_allow_html=True)
                     st.markdown(f'<div class="center-prod-title">{row["اسم النوع"]}</div>', unsafe_allow_html=True)
                     
                     c1, c2, c3, c4 = st.columns(4)
@@ -273,7 +272,6 @@ else:
         query = st.text_input("", placeholder="ابحث باسم الخامة (والمسافات مدعومة بالكامل)...", label_visibility="collapsed")
         if query and not df_main.empty:
             q_clean = query.strip()
-            # آلية بحث متطورة تعتمد على الاسم كعنصر أساسي وتدعم كتابة الكود بشكل ثانوي مع المسافات
             res = df_main[
                 df_main['اسم النوع'].str.contains(q_clean, case=False, na=False) | 
                 df_main['الكود'].astype(str).str.contains(q_clean, case=False, na=False) |
@@ -320,4 +318,4 @@ else:
             if st.form_submit_button("تأكيد تسجيل الخروج وحفظ العملية فوراً", use_container_width=True):
                 if out_code and out_name and out_receiver:
                     current_date, current_time = get_egypt_time()
-                    new_out = {"الكود": str(
+                    new_out = {"الكود": str(out_code).strip(), "اسم النوع": str(out_name).strip(), "عدد الامتار": out_meters, "العدد": int(out_qty), "المكان": str(out_loc).strip(), "اسم التسليم": st
