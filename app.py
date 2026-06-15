@@ -118,7 +118,7 @@ elif st.session_state.is_admin:
     df_main = st.session_state.db_main
     df_out = st.session_state.db_out
 
-    # خيار البحث والتعديل المطور للمسؤول (الاسم أساسي والمسافات مدعومة بالكامل)
+    # خيار البحث والتعديل المطور للمسؤول
     if menu_choice == "تعديل بيانات المخزن الحالي":
         st.markdown('<div class="focus-card-title">البحث والتعديل المطور للمخزن الرئيسي</div>', unsafe_allow_html=True)
         search_c = st.text_input("", placeholder="ابحث باسم الخامة بشكل أساسي أو الكود...", label_visibility="collapsed")
@@ -318,4 +318,9 @@ else:
             if st.form_submit_button("تأكيد تسجيل الخروج وحفظ العملية فوراً", use_container_width=True):
                 if out_code and out_name and out_receiver:
                     current_date, current_time = get_egypt_time()
-                    new_out = {"الكود": str(out_code).strip(), "اسم النوع": str(out_name).strip(), "عدد الامتار": out_meters, "العدد": int(out_qty), "المكان": str(out_loc).strip(), "اسم التسليم": str(out_receiver).strip(), "
+                    
+                    # تقسيم الـ dictionary على أسطر قصيرة ومحمية تماماً من القطع والتنصيص
+                    new_out = {
+                        "الكود": str(out_code).strip(),
+                        "اسم النوع": str(out_name).strip(),
+    
