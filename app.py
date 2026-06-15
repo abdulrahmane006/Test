@@ -6,11 +6,11 @@ import os
 # 1. إعدادات الصفحة الأساسية وثبات قاعدة البيانات
 st.set_page_config(page_title="المخازن", layout="centered")
 
-# أسماء الملفات المحلية الثابتة داخل جيت هاب
+# أسماء الملفات المحلية الثابتة
 FILE_MAIN = "main_db.csv"
 FILE_OUT = "out_db.csv"
 
-# دالة ذكية لحساب الوقت الحالي
+# دالة ذكية لحساب الوقت الحالي بتوقيت مصر
 def get_egypt_time():
     egypt_now = datetime.utcnow() + timedelta(hours=3)
     date_str = egypt_now.strftime("%d/%m/%Y")
@@ -118,7 +118,6 @@ elif st.session_state.is_admin:
     df_main = st.session_state.db_main
     df_out = st.session_state.db_out
 
-    # خيار البحث والتعديل المطور للمسؤول
     if menu_choice == "تعديل بيانات المخزن الحالي":
         st.markdown('<div class="focus-card-title">البحث والتعديل المطور للمخزن الرئيسي</div>', unsafe_allow_html=True)
         search_c = st.text_input("", placeholder="ابحث باسم الخامة بشكل أساسي أو الكود...", label_visibility="collapsed")
@@ -189,7 +188,7 @@ elif st.session_state.is_admin:
                     new_r = {"الكود": str(nc).strip(), "اسم النوع": str(nn).strip(), "عدد الامتار": nm, "العدد": int(nq), "المكان": str(nl).strip(), "التاريخ": current_date, "الوقت": current_time}
                     df_main = pd.concat([df_main, pd.DataFrame([new_r])], ignore_index=True)
                     save_and_sync(df_main, "main")
-                    st.success("✓ تم إضافة القماش الجديد وحفظه بنجاح واستقرار")
+                    st.success("✓ تم إضافة القماش الجديد وحفظه بنجاح")
                     st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -242,7 +241,7 @@ elif st.session_state.is_admin:
                             df_out = df_out.drop(idx).reset_index(drop=True)
                             save_and_sync(df_out, "out")
                             st.session_state.del_out_idx = None
-                            st.success("تم المسح والحفظ لحظياً بنجاح")
+                            st.success("تم المسح والحفظ بنجاح")
                             st.rerun()
                     with bc2:
                         if st.button("تراجع وإلغاء", key=f"out_no_{idx}", use_container_width=True):
@@ -251,7 +250,7 @@ elif st.session_state.is_admin:
                     if st.button(f"إزالة بطاقة التسليم ({row['اسم النوع']})", key=f"out_del_btn_{idx}", use_container_width=True):
                         st.session_state.del_out_idx = idx; st.rerun()
         else:
-            st.markdown('<div class="unified-card" style="border-color: #d9d9d9; background-color: #f4f6f9;"><p style="color: #4f5d75; font-size: 16px; margin: 0;">شيت التسليمات فارغ حالياً ولا توجد بضائع خارجة مسجلة</p></div>', unsafe_allow_html=True)
+            st.markdown('<div class="unified-card" style="border-color: #d9d9d9; background-color: #f4f6f9;"><p style="color: #4f5d75; font-size: 16px; margin: 0;">شيت التسليمات فارغ حالياً</p></div>', unsafe_allow_html=True)
 
     st.write("---")
     if st.button("خروج والعودة لواجهة العمال الرئيسية", use_container_width=True):
@@ -319,8 +318,9 @@ else:
                 if out_code and out_name and out_receiver:
                     current_date, current_time = get_egypt_time()
                     
-                    # تقسيم الـ dictionary على أسطر قصيرة ومحمية تماماً من القطع والتنصيص
+                    # الـ dictionary مقسم بالمسطرة، سليم ومحمي 100% من أي خطأ تنصيص
                     new_out = {
                         "الكود": str(out_code).strip(),
                         "اسم النوع": str(out_name).strip(),
-    
+                        "عدد الامتار": out_meters,
+                        "العدد": int(out_qty)
