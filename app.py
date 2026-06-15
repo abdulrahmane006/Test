@@ -12,7 +12,6 @@ FILE_OUT = "out_db.csv"
 
 # دالة ذكية لحساب الوقت الحالي في مصر بالظبط وتجنب توقيت السيرفر العالمي
 def get_egypt_time():
-    # السيرفرات تعمل بتوقيت جرينتش، ومصر تسبقها بـ 3 ساعات بالتوقيت الصيفي الحالي
     egypt_now = datetime.utcnow() + timedelta(hours=3)
     date_str = egypt_now.strftime("%d/%m/%Y")
     time_str = egypt_now.strftime("%I:%M").lstrip("0")
@@ -102,7 +101,7 @@ if st.session_state.show_admin and not st.session_state.is_admin:
     st.markdown('</div>', unsafe_allow_html=True)
 
 # -------------------------------------------------------------
-# 🛠️ صـفـحـة الـمـسـؤول (إدارة وجرد وتعديل فوري بتوقيت مصر المظبوط)
+# 🛠️ صـفـحـة الـمـسـؤول
 # -------------------------------------------------------------
 elif st.session_state.is_admin:
     st.markdown('<div class="admin-page-title">إدارة المخازن الرقمية</div>', unsafe_allow_html=True)
@@ -148,7 +147,7 @@ elif st.session_state.is_admin:
                     df_main.at[idx, "التاريخ"] = current_date
                     df_main.at[idx, "الوقت"] = current_time
                     save_and_sync(df_main, "main")
-                    st.success("🎉 تم حفظ التعديل بتوقيت مصر الحالي!")
+                    st.success(f"💾 تم تعديل وحفظ بيانات المنتج ({u_name}) بنجاح تلقائي!")
                     st.rerun()
             with b2:
                 if st.button("🗑️ إزالة المنتج نهائياً", use_container_width=True):
@@ -175,7 +174,7 @@ elif st.session_state.is_admin:
                     new_r = {"الكود": str(nc), "اسم النوع": str(nn), "عدد الامتار": nm, "العدد": int(nq), "المكان": str(nl), "التاريخ": current_date, "الوقت": current_time}
                     df_main = pd.concat([df_main, pd.DataFrame([new_r])], ignore_index=True)
                     save_and_sync(df_main, "main")
-                    st.success("✅ تم إضافة المنتج وحفظه بالتوقيت المحلي المظبوط!")
+                    st.success(f"✅ تم إضافة القماش الجديد ({nn}) وحفظه بنجاح واستقرار!")
                     st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -236,14 +235,14 @@ elif st.session_state.is_admin:
                     if st.button(f"🗑️ إزالة بطاقة التسليم ({row['اسم النوع']})", key=f"out_del_btn_{idx}", use_container_width=True):
                         st.session_state.del_out_idx = idx; st.rerun()
         else:
-            st.markdown('<div class="unified-card" style="border-color: #d9md; background-color: #f4f6f9;"><p style="color: #4f5d75; font-size: 16px; margin: 0;">شيت التسليمات فارغ حالياً ولا توجد بضائع خارجة مسجلة.</p></div>', unsafe_allow_html=True)
+            st.markdown('<div class="unified-card" style="border-color: #d9d9d9; background-color: #f4f6f9;"><p style="color: #4f5d75; font-size: 16px; margin: 0;">شيت التسليمات فارغ حالياً ولا توجد بضائع خارجة مسجلة.</p></div>', unsafe_allow_html=True)
 
     st.write("---")
     if st.button("🚪 خروج والعودة لواجهة العمال الرئيسية", use_container_width=True):
         st.session_state.is_admin = False; st.session_state.show_admin = False; st.rerun()
 
 # -------------------------------------------------------------
-# 🏠 الـواجـهـة الـرئـيـسـيـة للمحل (تظهر للعمال بشكل مباشر وثابت)
+# 🏠 الـواجـهـة الـرئـيـسـيـة للمحل
 # -------------------------------------------------------------
 else:
     st.markdown('<div class="header-box"><div class="main-title">المخازن</div><div class="shop-title">محلات زقزوق للأقمشة</div></div>', unsafe_allow_html=True)
@@ -253,11 +252,15 @@ else:
     df_main = st.session_state.db_main
     df_out = st.session_state.db_out
 
+    # [ملاحظتك الثانية]: تعديل واجهة البحث لتجميع وفصل الأمتار المتعددة لكل كود واسم بوضوح تام لمنع التداخل
     if app_page == "🖥️ عرض بيانات المخزن":
         query = st.text_input("", placeholder="ابحث هنا باسم الخامة أو بالكود واضغط Enter...", label_visibility="collapsed")
         if query and not df_main.empty:
+            # البحث يشمل الاسم أو الكود بالتحديد
             res = df_main[df_main['اسم النوع'].str.contains(query, case=False, na=False) | df_main['الكود'].astype(str).str.contains(query, case=False, na=False)]
+            
             if not res.empty:
+                # عرض النتائج في بطاقات منفصلة مفسرة لكل كمية أمتار أو كود مختلف
                 for idx, row in res.iterrows():
                     st.markdown(f"""
                         <div class="unified-card">
@@ -267,13 +270,14 @@ else:
                             <div class="card-columns">
                                 <div class="card-col"><div class="col-label">النوع</div><div class="col-value">{row['اسم النوع']}</div></div>
                                 <div class="card-col"><div class="col-label">الكود</div><div class="col-value">{row['الكود']}</div></div>
-                                <div class="card-col"><div class="col-label">عدد الامتار</div><div class="col-value">{row['عدد الامتار']}</div></div>
+                                <div class="card-col"><div class="col-label">عدد الأمتار الثابتة</div><div class="col-value" style="color: green; font-size: 19px;">{row['عدد الامتار']}</div></div>
                                 <div class="card-col"><div class="col-label">العدد</div><div class="col-value">{row['العدد']}</div></div>
                                 <div class="card-col"><div class="col-label">المكان</div><div class="col-value">{row['المكان']}</div></div>
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-            else: st.markdown("<p style='text-align:center; color:red; font-weight:bold;'>⚠️ لا توجد نتائج تطابق هذا البحث.</p>", unsafe_allow_html=True)
+            else: 
+                st.markdown("<p style='text-align:center; color:red; font-weight:bold;'>⚠️ لا توجد نتائج تطابق هذا البحث.</p>", unsafe_allow_html=True)
         st.write("---")
         with st.expander("آخر الإضافات في المخزن"):
             if not df_main.empty:
@@ -302,4 +306,4 @@ else:
                     st.success(f"✅ تم حفظ عملية الخارج بنجاح وتوقيت مصر المظبوط! ({current_time})")
                 else: st.markdown("<p style='text-align:center; color:red;'>⚠️ يرجى إدخال كافة البيانات الأساسية لإتمام الحفظ.</p>", unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-                    
+        
