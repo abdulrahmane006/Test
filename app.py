@@ -83,7 +83,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 3. زر علوي لفتح وإغلاق لوحة التحكم بأمان
+# 3. زر عللو غيار لفتح وإغلاق لوحة التحكم بأمان
 top_c1, top_c2 = st.columns([1, 9])
 with top_c1:
     if st.button("التحكم", key="panel_gear"):
@@ -318,9 +318,9 @@ else:
                 if out_code and out_name and out_receiver:
                     current_date, current_time = get_egypt_time()
                     
-                    # الـ dictionary مقسم بالمسطرة، سليم ومحمي 100% من أي خطأ تنصيص
+                    # الـ dictionary مقسم بالمسطرة، سليم ومحمي 100% من أي خطأ تنصيص ومستحيل يتقص
                     new_out = {
                         "الكود": str(out_code).strip(),
                         "اسم النوع": str(out_name).strip(),
                         "عدد الامتار": out_meters,
-                        "العدد": int(out_qty)
+                        "ال
